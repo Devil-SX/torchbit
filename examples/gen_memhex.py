@@ -15,4 +15,4 @@ if __name__ == "__main__":
             file_path = os.path.join(dir_path, file_name)
             tensor = torch.load(file_path)
             print(f"Loaded tensor from {file_path}")
-            dlrtl.tensor2memhex(tensor, file_path.replace(".pth", ".hex"))
+            dlrtl.Hensor.from_tensor(tensor).to_memhex(file_path.replace(".pth", ".hex"))   

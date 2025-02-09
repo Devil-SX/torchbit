@@ -1,6 +1,8 @@
 import torch
 
 def compare(input, other, rtol=1e-3, atol=1e-1):
+    input = input.to(torch.float32)
+    other = other.to(torch.float32)
     is_equal = torch.allclose(input, other, rtol=rtol, atol=atol)
 
     abs_diff = torch.abs(input-other)

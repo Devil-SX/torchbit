@@ -9,7 +9,7 @@ setup(
     ],
     author='ShuchengDu',
     author_email='shuchengdu@ust.hk',
-    description='utils for dl accelerator developing',
+    description='utils for deep learning accelerator developing',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/Devil-SX/dlrtl',
