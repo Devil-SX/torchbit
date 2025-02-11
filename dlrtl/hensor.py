@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 
 dtype_to_bits = {
-    # for unisigned int, only support uint8, uint16 and uint32 are limited support
+    # for unisigned int, only support uint8. uint16 and uint32 are limited support
     torch.uint8: 8,
     torch.int8: 8,
     torch.int16: 16,
@@ -73,15 +73,20 @@ class Hensor:
         vec = []
         mask = (1 << bit_length) - 1  
         
-        for _ in range(num):
-            vec.append(value & mask)  
-            value >>= bit_length        
-        vec = np.array(vec).astype(standard_numpy_dtype[bit_length])
-        return Hensor(torch.from_numpy(vec).view(dtype))
+        if num == 1:
+            v = value & mask
+            vec = np.array(v).astype(standard_numpy_dtype[bit_length])
+            return Hensor(torch.from_numpy(vec).view(dtype))
+        else:
+            for _ in range(num):
+                vec.append(value & mask)  
+                value >>= bit_length        
+            vec = np.array(vec).astype(standard_numpy_dtype[bit_length])
+            return Hensor(torch.from_numpy(vec).view(dtype))
 
 
     def to_cocotb(self):
-        assert len(self.tensor.shape) == 1
+        assert len(self.tensor.shape) <= 1
         assert self.tensor.dtype in dtype_to_bits.keys()
         tensor = self.tensor
 
@@ -91,8 +96,11 @@ class Hensor:
 
         result = 0
         mask = (1 << bit_length) - 1 
-        for v in reversed(tensor_numpy.astype(object)):
-            result = (result << bit_length) | (v & mask) 
+        if self.tensor.shape == 1:
+            for v in reversed(tensor_numpy.astype(object)):
+                result = (result << bit_length) | (v & mask) 
+        else:
+            result = tensor_numpy.item() & mask
         return result
 
     def to_memhex(self, out_path: str | Path, reshape: bool = False):
