@@ -96,7 +96,7 @@ class Hensor:
 
         result = 0
         mask = (1 << bit_length) - 1 
-        if self.tensor.shape == 1:
+        if len(self.tensor.shape) == 1:
             for v in reversed(tensor_numpy.astype(object)):
                 result = (result << bit_length) | (v & mask) 
         else:
