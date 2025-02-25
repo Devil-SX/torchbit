@@ -1,0 +1,13 @@
+Bug 
+
+# X/Z Value 支持
+
+先前都是对 IO 的 value 当作 int 进行操作，实际上这个值的类型是 BinaryValue，BinaryValue 在赋值时通过 integer 接口传入，但 BinaryValue 在读取时，如果有 integer 表示会转换为 integer 进行操作，此时如果信号中有 X/Z 会处理为 0 对待
+
+在读取 cocotb 时的接口即 `Hensor.from_cocotb()` 添加显式读取 integer 以及如果有 X/Z 给出一个 Warning （不阻塞程序运行）
+
+backend Verilator 默认将 X 转换为 0/1，z value 的处理也只能在模块内部存在，只有当调用 VCS backend 的时候能够暴露 x 不定态的问题
+
+https://docs.cocotb.org/en/stable/writing_testbenches.html
+
+https://docs.cocotb.org/en/stable/_modules/cocotb/binary.html

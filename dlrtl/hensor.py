@@ -1,5 +1,7 @@
+import cocotb.binary
 import torch
 import numpy as np
+import cocotb
 from pathlib import Path
 
 dtype_to_bits = {
@@ -65,14 +67,13 @@ class Hensor:
             tensor = tensor.reshape(shape)
         return Hensor(tensor.view(dtype))
 
-    def from_cocotb(value: int, num: int, dtype: torch.dtype):
-        if not isinstance(value, int):
-            if isinstance(value, str):
-                print("Warning: value is a string, maybe there is X/Z value, use the zero result")
-                return Hensor(torch.zeros(num).view(dtype))
-            else:
-                raise ValueError("value must be an integer")
+    def from_cocotb(value: cocotb.binary.BinaryValue, num: int, dtype: torch.dtype):
+        assert isinstance(value, cocotb.binary.BinaryValue), "value must be a cocotb binary value, use Hensor.from_cocotb(dut.io_xxx.value)"
+        if ("x" in value.binstr ) or ("z" in value.binstr):
+            print("Warning: value is a X/Z value, use the zero result")
+            return Hensor(torch.zeros(num).view(dtype))
 
+        value_int = value.integer
         assert dtype in dtype_to_bits.keys()
         bit_length = dtype_to_bits[dtype]
 
@@ -80,12 +81,12 @@ class Hensor:
         mask = (1 << bit_length) - 1
 
         if num == 1:
-            v = value & mask
+            v = value_int & mask
             vec = np.array(v).astype(standard_numpy_dtype[bit_length])
             return Hensor(torch.from_numpy(vec).view(dtype))
         else:
             for _ in range(num):
-                vec.append(value & mask)
+                vec.append(value_int & mask)
                 value >>= bit_length
             vec = np.array(vec).astype(standard_numpy_dtype[bit_length])
             return Hensor(torch.from_numpy(vec).view(dtype))
