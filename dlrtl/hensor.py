@@ -87,7 +87,7 @@ class Hensor:
         else:
             for _ in range(num):
                 vec.append(value_int & mask)
-                value >>= bit_length
+                value_int >>= bit_length
             vec = np.array(vec).astype(standard_numpy_dtype[bit_length])
             return Hensor(torch.from_numpy(vec).view(dtype))
 
