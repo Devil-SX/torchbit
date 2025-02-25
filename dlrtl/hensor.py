@@ -64,26 +64,31 @@ class Hensor:
         if shape:
             tensor = tensor.reshape(shape)
         return Hensor(tensor.view(dtype))
-    
 
-    def from_cocotb(value:int, num:int, dtype:torch.dtype):
+    def from_cocotb(value: int, num: int, dtype: torch.dtype):
+        if not isinstance(value, int):
+            if isinstance(value, str):
+                print("Warning: value is a string, maybe there is X/Z value, use the zero result")
+                return Hensor(torch.zeros(num).view(dtype))
+            else:
+                raise ValueError("value must be an integer")
+
         assert dtype in dtype_to_bits.keys()
         bit_length = dtype_to_bits[dtype]
 
         vec = []
-        mask = (1 << bit_length) - 1  
-        
+        mask = (1 << bit_length) - 1
+
         if num == 1:
             v = value & mask
             vec = np.array(v).astype(standard_numpy_dtype[bit_length])
             return Hensor(torch.from_numpy(vec).view(dtype))
         else:
             for _ in range(num):
-                vec.append(value & mask)  
-                value >>= bit_length        
+                vec.append(value & mask)
+                value >>= bit_length
             vec = np.array(vec).astype(standard_numpy_dtype[bit_length])
             return Hensor(torch.from_numpy(vec).view(dtype))
-
 
     def to_cocotb(self):
         assert len(self.tensor.shape) <= 1
@@ -95,10 +100,10 @@ class Hensor:
         tensor_numpy = tensor.numpy()
 
         result = 0
-        mask = (1 << bit_length) - 1 
+        mask = (1 << bit_length) - 1
         if len(self.tensor.shape) == 1:
             for v in reversed(tensor_numpy.astype(object)):
-                result = (result << bit_length) | (v & mask) 
+                result = (result << bit_length) | (v & mask)
         else:
             result = tensor_numpy.item() & mask
         return result
