@@ -71,7 +71,7 @@ class Hensor:
         assert isinstance(value, cocotb.binary.BinaryValue), "value must be a cocotb binary value, use Hensor.from_cocotb(dut.io_xxx.value)"
         if ("x" in value.binstr ) or ("z" in value.binstr):
             print("Warning: value is a X/Z value, use the zero result")
-            return Hensor(torch.zeros(num).view(dtype))
+            return Hensor(torch.zeros(num, dtype=dtype))
 
         value_int = value.integer
         assert dtype in dtype_to_bits.keys()
