@@ -27,10 +27,9 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None)
         input_np = input.numpy().flatten()
         other_np = other.numpy().flatten()
 
-        # 绘制直方图
         plt.figure(figsize=(12, 6))
-        plt.hist(input_np, bins=100, alpha=0.5, label='Input', color='blue')
-        plt.hist(other_np, bins=100, alpha=0.5, label='Other', color='red')
+        plt.hist(input_np, bins=100, alpha=0.5, label='Input', color='red')
+        plt.hist(other_np, bins=100, alpha=0.5, label='Other', color='green')
         plt.title('Histogram of Input and Other Tensors')
         plt.xlabel('Value')
         plt.ylabel('Frequency')
