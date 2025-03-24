@@ -49,7 +49,7 @@ Dump to hexfile / binfile
 Dump to cocotb
 
 ```
-value  0x3F80 | 0x4000 << 16 | 0x4040 << 32
+value = 0x3F80 | 0x4000 << 16 | 0x4040 << 32
 ```
 
 **Implementation Details**

@@ -13,7 +13,7 @@ class Hensor:
     # memhex -> tensor
     # int -> tensor
     def __init__(self, tensor: torch.Tensor = None):
-        assert len(self.tensor.shape) <= 1
+        assert len(tensor.shape) <= 1
         self.tensor = tensor
 
     @staticmethod
