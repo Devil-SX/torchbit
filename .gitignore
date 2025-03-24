@@ -128,3 +128,5 @@ cython_debug/
 *.mem
 temp
 TODO
+
+*.bin

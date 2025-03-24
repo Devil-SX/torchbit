@@ -1,6 +1,6 @@
 Bug 
 
-# X/Z Value 支持
+Feb 25, 2025, X/Z Value 支持
 
 先前都是对 IO 的 value 当作 int 进行操作，实际上这个值的类型是 BinaryValue，BinaryValue 在赋值时通过 integer 接口传入，但 BinaryValue 在读取时，如果有 integer 表示会转换为 integer 进行操作，此时如果信号中有 X/Z 会处理为 0 对待
 
@@ -11,3 +11,7 @@ backend Verilator 默认将 X 转换为 0/1，z value 的处理也只能在模�
 https://docs.cocotb.org/en/stable/writing_testbenches.html
 
 https://docs.cocotb.org/en/stable/_modules/cocotb/binary.html
+
+Mar 24, 2025, Verilog Interface
+
+处理 Numpy / Torch <-> Verilog 之间的 byte order 转换
