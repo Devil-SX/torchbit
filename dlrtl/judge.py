@@ -5,6 +5,8 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None)
     assert input.shape == other.shape, f"Shape mismatch: {input.shape} != {other.shape}"
     input = input.to(torch.float32)
     other = other.to(torch.float32)
+    input = input.cpu()
+    other = other.cpu()
     is_equal = torch.allclose(input, other, rtol=rtol, atol=atol)
 
     abs_diff = torch.abs(input - other)
