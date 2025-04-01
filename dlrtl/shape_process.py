@@ -7,7 +7,7 @@ import torch.nn.functional as F
 def get_padlen(dim_size, align):
     return (align - dim_size % align) % align
 
-def pad(tensor, dim:int, align:int):
+def pad(tensor, dim:int, align:int, pad_last=True):
     shape = tensor.shape
     assert dim < len(shape)
     dtype = tensor.dtype
@@ -16,9 +16,13 @@ def pad(tensor, dim:int, align:int):
     zero_shape[dim] = get_padlen(shape[dim], align)
 
     zeros = torch.zeros(zero_shape, dtype=dtype)
-    return torch.cat([tensor, zeros], dim=dim).clone()
+    if pad_last:
+        return torch.cat([tensor, zeros], dim=dim).clone()
+    else:
+        return torch.cat([zeros, tensor], dim=dim).clone()
 
-def depad(tensor, dim:int, orignal_dim:int):
+
+def depad(tensor, dim:int, orignal_dim:int, depad_last=True):
     shape = tensor.shape
     assert dim < len(shape)
 
@@ -27,7 +31,11 @@ def depad(tensor, dim:int, orignal_dim:int):
 
     # advanced indexing to create new tensor
     slices = [slice(None)] * len(shape)
-    slices[dim] = slice(0, orignal_dim)
+    if depad_last:
+        slices[dim] = slice(0, orignal_dim)
+    else:
+        padlen = tensor.shape[dim] - orignal_dim
+        slices[dim] = slice(padlen, None)
     return tensor[tuple(slices)].clone()
 
 

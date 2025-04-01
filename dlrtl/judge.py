@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None):
+def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None, color=None):
     assert input.shape == other.shape, f"Shape mismatch: {input.shape} != {other.shape}"
     input = input.to(torch.float32)
     other = other.to(torch.float32)
@@ -22,7 +22,12 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None)
     print(f"Mean rel diff:\t {mean_ref_diff}")
     print(f"MSE:\t {mse}")
     print(f"rtol: {rtol}, atol: {atol}")
-    print(f"Is equal: {is_equal}")
+    is_equal_str = str(is_equal)
+    if color:
+        prefix = "\033[1;32m" if is_equal else "\033[1;31m"
+        suffix = "\033[0m"
+        is_equal_str = prefix + is_equal_str + suffix
+    print(f"Is equal: {is_equal_str}")
 
     if visualize:
         import matplotlib.pyplot as plt  
@@ -40,6 +45,8 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None)
             plt.savefig(save_path)
         else:
             plt.show()
+    
+    return is_equal
 
 if __name__ == "__main__":
     import torch
