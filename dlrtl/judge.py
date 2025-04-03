@@ -11,14 +11,21 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None,
 
     abs_diff = torch.abs(input - other)
     max_abs_diff = torch.max(abs_diff).item()
+    max_abs_diff_idx = torch.argmax(abs_diff)
+    max_abs_diff_input = input.flatten()[max_abs_diff_idx].item()
+    max_abs_diff_other = other.flatten()[max_abs_diff_idx].item()
 
     rel_diff = torch.where(input != 0, abs_diff / torch.abs(input), abs_diff)
     max_rel_diff = torch.max(rel_diff).item()
+    max_rel_diff_idx = torch.argmax(rel_diff)
+    max_rel_diff_input = input.flatten()[max_rel_diff_idx].item()
+    max_rel_diff_other = other.flatten()[max_rel_diff_idx].item()
+
     mean_ref_diff = torch.mean(rel_diff).item()
 
     mse = abs_diff.pow(2).mean().item()
-    print(f"Max abs diff:\t {max_abs_diff}")
-    print(f"Max rel diff:\t {max_rel_diff}")
+    print(f"Max abs diff:\t {max_abs_diff} at {max_abs_diff_idx} \t {max_abs_diff_input}/{max_abs_diff_other}")
+    print(f"Max rel diff:\t {max_rel_diff} at {max_rel_diff_idx} \t {max_rel_diff_input}/{max_rel_diff_other}")
     print(f"Mean rel diff:\t {mean_ref_diff}")
     print(f"MSE:\t {mse}")
     print(f"rtol: {rtol}, atol: {atol}")
