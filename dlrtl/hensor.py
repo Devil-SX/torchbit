@@ -19,16 +19,10 @@ class Hensor:
     @staticmethod
     def from_tensor(tensor: torch.Tensor):
         return Hensor(tensor)
-
-    def from_cocotb(value: cocotb.binary.BinaryValue, num: int, dtype: torch.dtype):
-        assert isinstance(
-            value, cocotb.binary.BinaryValue
-        ), "value must be a cocotb binary value, use Hensor.from_cocotb(dut.io_xxx.value)"
-        if ("x" in value.binstr) or ("z" in value.binstr):
-            print("Warning: value is a X/Z value, use the zero result")
-            return Hensor(torch.zeros(num, dtype=dtype))
-
-        value_int = value.integer
+    
+    @staticmethod
+    def from_int(value_int: int, num: int, dtype: torch.dtype):
+        assert isinstance(value_int, int), "value must be an int, use Hensor.from_int(value)"
         assert dtype in dtype_to_bits.keys()
         bit_length = dtype_to_bits[dtype]
 
@@ -45,6 +39,18 @@ class Hensor:
                 value_int >>= bit_length
             vec = np.array(vec).astype(standard_numpy_dtype[bit_length])
             return Hensor(torch.from_numpy(vec).view(dtype))
+
+    @staticmethod
+    def from_cocotb(value: cocotb.binary.BinaryValue, num: int, dtype: torch.dtype):
+        assert isinstance(
+            value, cocotb.binary.BinaryValue
+        ), "value must be a cocotb binary value, use Hensor.from_cocotb(dut.io_xxx.value)"
+        if ("x" in value.binstr) or ("z" in value.binstr):
+            print("Warning: value is a X/Z value, use the zero result")
+            return Hensor(torch.zeros(num, dtype=dtype))
+
+        value_int = value.integer
+        return Hensor.from_int(value_int, num, dtype)
 
     def to_cocotb(self):
         assert len(self.tensor.shape) <= 1

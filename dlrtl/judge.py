@@ -30,10 +30,12 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None,
     print(f"MSE:\t {mse}")
     print(f"rtol: {rtol}, atol: {atol}")
     is_equal_str = str(is_equal)
+    absolute_equal_str = "Absolutely " if (max_abs_diff == 0) else ""
+    is_equal_str = absolute_equal_str + is_equal_str
     if color:
         prefix = "\033[1;32m" if is_equal else "\033[1;31m"
         suffix = "\033[0m"
-        is_equal_str = prefix + is_equal_str + suffix
+        is_equal_str = prefix  + is_equal_str + suffix
     print(f"Is equal: {is_equal_str}")
 
     if visualize:
