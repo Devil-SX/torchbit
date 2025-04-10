@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from pathlib import Path
 
 def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None, color=None):
     assert input.shape == other.shape, f"Shape mismatch: {input.shape} != {other.shape}"
@@ -44,13 +45,15 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None,
         other_np = other.numpy().flatten()
 
         plt.figure(figsize=(12, 6))
-        plt.hist(input_np, bins=100, alpha=0.5, label='Input', color='red')
-        plt.hist(other_np, bins=100, alpha=0.5, label='Other', color='green')
-        plt.title('Histogram of Input and Other Tensors')
+        plt.hist(input_np, bins=100, alpha=0.5, label='Test', color='red')
+        plt.hist(other_np, bins=100, alpha=0.5, label='Ref', color='green')
+        plt.title('Histogram of Test and Reference Tensors')
         plt.xlabel('Value')
         plt.ylabel('Frequency')
         plt.legend()
         if save_path:
+            save_dir = Path(save_path).parent
+            save_dir.mkdir(parents=True, exist_ok=True)
             plt.savefig(save_path)
         else:
             plt.show()
