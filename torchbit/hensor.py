@@ -41,15 +41,16 @@ class Hensor:
             return Hensor(torch.from_numpy(vec).view(dtype))
 
     @staticmethod
-    def from_cocotb(value: cocotb.binary.BinaryValue, num: int, dtype: torch.dtype):
+    def from_cocotb(value: cocotb.binary.BinaryValue | int, num: int, dtype: torch.dtype):
         assert isinstance(
             value, cocotb.binary.BinaryValue
-        ), "value must be a cocotb binary value, use Hensor.from_cocotb(dut.io_xxx.value)"
-        if ("x" in value.binstr) or ("z" in value.binstr):
+        ) or isinstance(value, int), "value must be a cocotb binary value or int value, use Hensor.from_cocotb(dut.io_xxx.value)"
+
+        if isinstance(value, cocotb.binary.BinaryValue) and (("x" in value.binstr) or ("z" in value.binstr)):
             print("Warning: value is a X/Z value, use the zero result")
             return Hensor(torch.zeros(num, dtype=dtype))
 
-        value_int = value.integer
+        value_int = value.integer if isinstance(value, cocotb.binary.BinaryValue) else value
         return Hensor.from_int(value_int, num, dtype)
 
     def to_cocotb(self):
@@ -72,3 +73,18 @@ class Hensor:
 
     def to_tensor(self):
         return self.tensor
+
+
+def tensor_to_cocotb(tensor:torch.Tensor):
+    """
+    Shortcut function to convert tensor to cocotb binary value
+    """
+
+    return Hensor.from_tensor(tensor).to_cocotb()
+
+
+def cocotb_to_tensor(value: cocotb.binary.BinaryValue, num: int, dtype: torch.dtype):
+    """
+    Shortcut function to convert cocotb binary value to tensor
+    """
+    return Hensor.from_cocotb(value, num, dtype).to_tensor()

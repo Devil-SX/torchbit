@@ -4,8 +4,8 @@ utils for deep learning accelerator developing
 
 ```
 # install dependencies Numpy, Pytorch, Matplotlib
-git clone https://github.com/Devil-SX/dlrtl.git
-cd dlrtl
+git clone https://github.com/Devil-SX/torchbit.git
+cd torchbit
 pip install -e .
 ```
 
@@ -13,11 +13,11 @@ pip install -e .
 
 All data rearrange / tilling / padding should be implemented using advanced tensor processing libraries like `einops` `torch` in Python
 
-![Diagram](dlrtl.drawio.png)
+![Diagram](torchbit.drawio.png)
 
 # Endianness
 
-dlrtl would dump binfile / hexfile to **BIG-ENDIAN**
+torchbit would dump binfile / hexfile to **BIG-ENDIAN**
 
 | Type | Endianness | 
 | --- | --- |
