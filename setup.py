@@ -6,6 +6,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         "torch",
+        "numpy",
+        "matplotlib",
     ],
     author='ShuchengDu',
     author_email='shuchengdu@ust.hk',

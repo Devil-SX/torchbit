@@ -3,6 +3,7 @@ utils for deep learning accelerator developing
 # Usage
 
 ```
+# install dependencies Numpy, Pytorch, Matplotlib
 git clone https://github.com/Devil-SX/dlrtl.git
 cd dlrtl
 pip install -e .
