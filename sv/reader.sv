@@ -3,7 +3,6 @@
 class FileReader #(
     int bit_width = 8
 );
-  // big endian -> small endian
   local int pointer = 0;
   local logic [bit_width-1:0] data[$]; 
 
@@ -17,14 +16,14 @@ class FileReader #(
         logic [bit_width-1:0] temp;
 
         if ($fread(temp, fd) == bit_width / 8) begin 
-          // logic [bit_width-1:0] temp_le = '0;
-          // for (int i = 0; i < bit_width / 8; i++) begin
-            // temp_le[i*8 +: 8] = temp[(bit_width - 8*(i+1)) +: 8];
-          // this.data.push_back(temp_le); // store as little endian
-          // end
+          // read little endian data
+          logic [bit_width-1:0] temp_le = '0;
+          for (int i = 0; i < bit_width / 8; i++) begin
+            temp_le[i*8 +: 8] = temp[(bit_width - 8*(i+1)) +: 8];
+          end
+          this.data.push_back(temp_le); // store as little endian
 
-          // fread big endian -> little endian
-          this.data.push_back(temp); // store as little endian
+          // this.data.push_back(temp); // store as little endian
         end
       end
       $fclose(fd);
@@ -68,7 +67,7 @@ class FileCollecter #(
     end
     foreach (data_queue[i]) begin
       for (int j = 0; j < bit_width / 8; j++) begin
-        data = (data_queue[i] >> (8 * (bit_width / 8 - 1 - j))); // write as big endian
+        data = (data_queue[i] >> (8 * j)); // write as little endian
         $fwrite(fd, "%c", data);
       end
     end

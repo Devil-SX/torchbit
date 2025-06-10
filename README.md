@@ -17,8 +17,6 @@ All data rearrange / tilling / padding should be implemented using advanced tens
 
 # Endianness
 
-torchbit would dump binfile / hexfile to **BIG-ENDIAN**
-
 | Type | Endianness | 
 | --- | --- |
 | x86 | little endian | 
@@ -28,9 +26,9 @@ torchbit would dump binfile / hexfile to **BIG-ENDIAN**
 | Verilog | big endian |
 
 
-The default endianness of x86 is little endian, which can be checked by `lscpu | grep "Byte Order"`
+The default endianness of x86 is little endian, which can be checked by `lscpu | grep "Byte Order"`. But Verilog `$readmemh` `$fread` function use big-endian, which is different.
 
-Verilog `$readmemh` `$fread` function use big-endian, which is different
+torchbit treat binfile / hexfile as **LITTLE-ENDIAN** defaultly. There is a little-endian system verilog file interface in `sv` folder.
 
 Such a bf16 tensor `[1., 2., 3.]`
 
@@ -40,8 +38,14 @@ Such a bf16 tensor `[1., 2., 3.]`
 | 2 | 0x4000 | 0x0040 |
 | 3 | 0x4040 | 0x4040 |
 
+Dump to hexfile / binfile (little-endian, default)
 
-Dump to hexfile / binfile
+```
+80 3F 00 40 40 40
+```
+
+
+Dump to hexfile / binfile (big-endian)
 
 ```
 40 40 40 00 3F 80
