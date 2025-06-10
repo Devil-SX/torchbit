@@ -4,19 +4,24 @@ class FileReader #(
     int bit_width = 8
 );
   local int pointer = 0;
-  local logic [bit_width-1:0] data[$];
+  local logic [bit_width-1:0] data[$]; // read as little endian
 
   function new(string file_path);
     int fd;
     fd = $fopen(file_path, "r");
     if (fd) begin
-      int temp;
       while (!$feof(
           fd
       )) begin
         logic [bit_width-1:0] temp;
-        if ($fread(temp, fd) == bit_width / 8) begin
-          this.data.push_back(temp); 
+
+        if ($fread(temp, fd) == bit_width / 8) begin 
+          // read as big endian
+          logic [bit_width-1:0] temp_le = '0;
+          for (int i = 0; i < bit_width / 8; i++) begin
+            temp_le[i*8 +: 8] = temp[(bit_width - 8*(i+1)) +: 8];
+          end
+          this.data.push_back(temp_le); // store as little endian
         end
       end
       $fclose(fd);
@@ -41,7 +46,8 @@ class FileCollecter #(
 );
 
   local string file_path;
-  local logic [bit_width-1:0] data_queue[$];
+  local logic [bit_width-1:0] data_queue[$]; // store as  endian
+  local byte data;
 
   function new(string file_path);
     this.file_path = file_path;
@@ -52,16 +58,19 @@ class FileCollecter #(
   endfunction
 
   function int dump();
-    int fd = $fopen(file_path, "w");
+    int fd = $fopen(file_path, "wb+");
     if (fd == 0) begin
       $display("[Error] Failed to open file: %s", file_path);
-      return 0; // Failure
+      return 0;  // Failure
     end
     foreach (data_queue[i]) begin
-      $fwrite(fd, "%c", data_queue[i]);
+      for (int j = 0; j < bit_width / 8; j++) begin
+        data = (data_queue[i] >> (8 * j)); // write as little endian
+        $fwrite(fd, "%c", data);
+      end
     end
     $fclose(fd);
     $display("[Info] Dumped %0d lines to %s", data_queue.size(), file_path);
-    return 1; // Success
+    return 1;  // Success
   endfunction
 endclass
