@@ -28,7 +28,7 @@ All data rearrange / tilling / padding should be implemented using advanced tens
 
 The default endianness of x86 is little endian, which can be checked by `lscpu | grep "Byte Order"`. But Verilog `$readmemh` `$fread` function use big-endian, which is different.
 
-torchbit treat binfile / hexfile as **LITTLE-ENDIAN** defaultly. There is a little-endian system verilog file interface in `sv` folder.
+torchbit treats binfile / hexfile as **LITTLE-ENDIAN** defaultly. There is a little-endian system verilog file interface in `sv` folder.
 
 Such a bf16 tensor `[1., 2., 3.]`
 

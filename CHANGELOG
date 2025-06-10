@@ -15,3 +15,7 @@ https://docs.cocotb.org/en/stable/_modules/cocotb/binary.html
 Mar 24, 2025, Verilog Interface
 
 处理 Numpy / Torch <-> Verilog 之间的 byte order 转换
+
+June 10, 2025, Verilog Interface
+
+将 default endianess 改为 little-endian，之前是 big-endian
