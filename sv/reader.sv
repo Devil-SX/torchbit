@@ -3,8 +3,9 @@
 class FileReader #(
     int bit_width = 8
 );
+  // big endian -> small endian
   local int pointer = 0;
-  local logic [bit_width-1:0] data[$]; // read as little endian
+  local logic [bit_width-1:0] data[$]; 
 
   function new(string file_path);
     int fd;
@@ -16,12 +17,14 @@ class FileReader #(
         logic [bit_width-1:0] temp;
 
         if ($fread(temp, fd) == bit_width / 8) begin 
-          // read as big endian
-          logic [bit_width-1:0] temp_le = '0;
-          for (int i = 0; i < bit_width / 8; i++) begin
-            temp_le[i*8 +: 8] = temp[(bit_width - 8*(i+1)) +: 8];
-          end
-          this.data.push_back(temp_le); // store as little endian
+          // logic [bit_width-1:0] temp_le = '0;
+          // for (int i = 0; i < bit_width / 8; i++) begin
+            // temp_le[i*8 +: 8] = temp[(bit_width - 8*(i+1)) +: 8];
+          // this.data.push_back(temp_le); // store as little endian
+          // end
+
+          // fread big endian -> little endian
+          this.data.push_back(temp); // store as little endian
         end
       end
       $fclose(fd);
@@ -44,9 +47,9 @@ endclass
 class FileCollecter #(
     int bit_width = 8
 );
-
+  // little endian -> big endian
   local string file_path;
-  local logic [bit_width-1:0] data_queue[$]; // store as  endian
+  local logic [bit_width-1:0] data_queue[$]; 
   local byte data;
 
   function new(string file_path);
@@ -65,7 +68,7 @@ class FileCollecter #(
     end
     foreach (data_queue[i]) begin
       for (int j = 0; j < bit_width / 8; j++) begin
-        data = (data_queue[i] >> (8 * j)); // write as little endian
+        data = (data_queue[i] >> (8 * (bit_width / 8 - 1 - j))); // write as big endian
         $fwrite(fd, "%c", data);
       end
     end

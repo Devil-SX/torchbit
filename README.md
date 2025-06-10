@@ -44,14 +44,16 @@ Such a bf16 tensor `[1., 2., 3.]`
 Dump to hexfile / binfile
 
 ```
-40 40 40 00 3F 80 00 00
+40 40 40 00 3F 80
 ```
 
-Dump to cocotb
+Dump to cocotb (Value in Verilog)
 
 ```
 value = 0x3F80 | 0x4000 << 16 | 0x4040 << 32
 ```
+
+
 
 **Implementation Details**
 
