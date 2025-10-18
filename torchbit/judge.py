@@ -3,7 +3,15 @@ import numpy as np
 from pathlib import Path
 
 def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None, color=None):
+    all_is_numpy = isinstance(input, np.ndarray) and isinstance(other, np.ndarray)
+    all_is_torch = isinstance(input, torch.Tensor) and isinstance(other, torch.Tensor)  
+    assert all_is_numpy or all_is_torch, f"Input and other must be either both numpy arrays or both torch tensors, while got {type(input)} and {type(other)}"    
     assert input.shape == other.shape, f"Shape mismatch: {input.shape} != {other.shape}"
+    shape = input.shape
+
+    if all_is_numpy:
+        input = torch.from_numpy(input)
+        other = torch.from_numpy(other)
     input = input.to(torch.float32)
     other = other.to(torch.float32)
     input = input.cpu()
@@ -25,8 +33,14 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None,
     mean_ref_diff = torch.mean(rel_diff).item()
 
     mse = abs_diff.pow(2).mean().item()
-    print(f"Max abs diff:\t {max_abs_diff} at {max_abs_diff_idx} \t {max_abs_diff_input}/{max_abs_diff_other}")
-    print(f"Max rel diff:\t {max_rel_diff} at {max_rel_diff_idx} \t {max_rel_diff_input}/{max_rel_diff_other}")
+
+    max_abs_diff_idx_tensor = torch.unravel_index(torch.tensor(max_abs_diff_idx), shape)
+    max_abs_diff_idx_tuple = tuple(idx.item() for idx in max_abs_diff_idx_tensor)
+    max_rel_diff_idx_tensor = torch.unravel_index(torch.tensor(max_rel_diff_idx), shape)
+    max_rel_diff_idx_tuple = tuple(idx.item() for idx in max_rel_diff_idx_tensor)
+    print(f"Shape: {shape}")
+    print(f"Max abs diff:\t {max_abs_diff} at {max_abs_diff_idx_tuple} \t {max_abs_diff_input}/{max_abs_diff_other}")
+    print(f"Max rel diff:\t {max_rel_diff} at {max_rel_diff_idx_tuple} \t {max_rel_diff_input}/{max_rel_diff_other}")
     print(f"Mean rel diff:\t {mean_ref_diff}")
     print(f"MSE:\t {mse}")
     print(f"rtol: {rtol}, atol: {atol}")

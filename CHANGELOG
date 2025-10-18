@@ -19,3 +19,5 @@ Mar 24, 2025, Verilog Interface
 June 10, 2025, Verilog Interface
 
 将 default endianess 改为 little-endian，之前是 big-endian
+
+Oct 18, 2025, v 0.3.1 Transformer Support

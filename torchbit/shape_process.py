@@ -7,7 +7,7 @@ import torch.nn.functional as F
 def get_padlen(dim_size, align):
     return (align - dim_size % align) % align
 
-def pad(tensor, dim:int, align:int, pad_last=True):
+def pad(tensor, dim:int, align:int, pad_last=True, pad_value=0):
     shape = tensor.shape
     assert dim < len(shape)
     dtype = tensor.dtype
@@ -15,7 +15,7 @@ def pad(tensor, dim:int, align:int, pad_last=True):
     zero_shape = list(shape)
     zero_shape[dim] = get_padlen(shape[dim], align)
 
-    zeros = torch.zeros(zero_shape, dtype=dtype)
+    zeros = torch.ones(zero_shape, dtype=dtype) * pad_value
     if pad_last:
         return torch.cat([tensor, zeros], dim=dim).clone()
     else:
