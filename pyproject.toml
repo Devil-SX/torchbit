@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "torchbit"
+version = "0.3.1"
+description = "utils for deep learning accelerator developing"
+readme = "README.md"
+requires-python = ">=3.6"
+license = { text = "MIT" }
+authors = [ { name = "ShuchengDu", email = "shuchengdu@ust.hk" } ]
+keywords = ["deep-learning", "accelerator", "cocotb", "torch"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+urls = { "Homepage" = "https://github.com/Devil-SX/torchbit" }
+
+dependencies = [
+  "torch",
+  "numpy",
+  "matplotlib",
+  "cocotb<2.0.0", # cocotb 2.0.0 update cocotb.runner api
+  "einops"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools]
+include-package-data = true
