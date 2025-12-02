@@ -4,7 +4,7 @@ import numpy as np
 import cocotb
 from pathlib import Path
 from .dtype import *
-from ..utils.utils import *
+from ..utils.bit_ops import *
 
 def read_arr(bytes, bit_length:int, endianess="little"):
     assert endianess in ["little", "big"], f"endianess must be 'little' or 'big', got {endianess}"

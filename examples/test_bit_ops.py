@@ -1,4 +1,4 @@
-import torchbit.utils.utils as bit_utils
+import torchbit.utils.bit_ops as bit_utils
 
 def test_get_bit():
     print("Testing get_bit...")

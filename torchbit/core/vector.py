@@ -4,7 +4,7 @@ import numpy as np
 import cocotb
 from pathlib import Path
 from .dtype import *
-from ..utils.utils import *
+from ..utils.bit_ops import *
 
 
 class Vector:
