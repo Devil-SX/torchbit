@@ -1,23 +1,28 @@
-Bug 
+# Changelog
 
-Feb 25, 2025, X/Z Value 支持
+All notable changes to this project will be documented in this file.
 
-先前都是对 IO 的 value 当作 int 进行操作，实际上这个值的类型是 BinaryValue，BinaryValue 在赋值时通过 integer 接口传入，但 BinaryValue 在读取时，如果有 integer 表示会转换为 integer 进行操作，此时如果信号中有 X/Z 会处理为 0 对待
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-在读取 cocotb 时的接口即 `Hensor.from_cocotb()` 添加显式读取 integer 以及如果有 X/Z 给出一个 Warning （不阻塞程序运行）
+## [0.3.1] - 2025-10-18
+### Added
+- Shape Transform Support.
 
-backend Verilator 默认将 X 转换为 0/1，z value 的处理也只能在模块内部存在，只有当调用 VCS backend 的时候能够暴露 x 不定态的问题
+## [Unreleased] - 2025-06-10
+### Changed
+- **Verilog Interface:** Changed default endianness from big-endian to little-endian.
 
-https://docs.cocotb.org/en/stable/writing_testbenches.html
+## [Unreleased] - 2025-03-24
+### Added
+- **Verilog Interface:** Added handling for Byte Order conversion between Numpy/Torch and Verilog.
 
-https://docs.cocotb.org/en/stable/_modules/cocotb/binary.html
-
-Mar 24, 2025, Verilog Interface
-
-处理 Numpy / Torch <-> Verilog 之间的 byte order 转换
-
-June 10, 2025, Verilog Interface
-
-将 default endianess 改为 little-endian，之前是 big-endian
-
-Oct 18, 2025, v 0.3.1 Transformer Support
+## [Unreleased] - 2025-02-25
+### Fixed
+- **X/Z Value Support:** Fixed issue where IO values treated as `int` caused issues with `BinaryValue` containing X/Z states.
+    - Previously, signals with X/Z were implicitly treated as 0 when accessed via `integer`.
+    - `Vector.from_cocotb()` (formerly `Hensor.from_cocotb()`) now explicitly handles `integer` conversion and issues a warning (non-blocking) if X/Z values are detected.
+    - Note: Verilator backend defaults X to 0/1. Z values are internal. X propagation is more visible with VCS backend.
+    - References:
+        - [Cocotb Writing Testbenches](https://docs.cocotb.org/en/stable/writing_testbenches.html)
+        - [Cocotb Binary Module](https://docs.cocotb.org/en/stable/_modules/cocotb/binary.html)
