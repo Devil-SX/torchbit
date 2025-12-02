@@ -75,14 +75,14 @@ There are three concept need to be concerned: bytes,decimal value, data type
 
 # Python Driver/Monitor
 
-HwVector: Hardware 1D Tensor
+Vector: Hardware 1D Tensor
 
-- pytorch 1D-tensor -> cocotb input, `HwVector.from_tensor(tensor).to_cocotb()`
-- cocotb output -> pytorch 1D-tensor, `HwVector.from_cocotb(dut.io_xx.value, num, dtype).to_tensor()`
+- pytorch 1D-tensor -> cocotb input, `Vector.from_tensor(tensor).to_cocotb()`
+- cocotb output -> pytorch 1D-tensor, `Vector.from_cocotb(dut.io_xx.value, num, dtype).to_tensor()`
 
 # Verilog Driver/Monitor
 
-HwMatrix: Hardware 2D Tensor, use pointer to read
+Matrix: Hardware 2D Tensor, use pointer to read
 
 - pytorch 2D-tensor -> memhex / bin file
 - memhex / bin file -> reader -> 1D logic

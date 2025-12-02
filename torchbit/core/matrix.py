@@ -4,7 +4,7 @@ import numpy as np
 import cocotb
 from pathlib import Path
 from .dtype import *
-from .utils import *
+from ..utils.utils import *
 
 def read_arr(bytes, bit_length:int, endianess="little"):
     assert endianess in ["little", "big"], f"endianess must be 'little' or 'big', got {endianess}"
@@ -43,7 +43,7 @@ def to_bytes(arr:np.ndarray, endianess="little"):
     return arr.tobytes()
 
 
-class HwMatrix:
+class Matrix:
     # tensor -> memhex
     # tensor -> int
     # memhex -> tensor
@@ -54,7 +54,7 @@ class HwMatrix:
 
     @staticmethod
     def from_tensor(tensor: torch.Tensor):
-        return HwMatrix(tensor)
+        return Matrix(tensor)
 
     @staticmethod
     def from_memhexfile(in_path: str | Path, dtype: torch.dtype, endianess="little"):
@@ -74,7 +74,7 @@ class HwMatrix:
             tensor_list.append(tensor_row)
 
         tensor = torch.stack(tensor_list)
-        return HwMatrix(tensor.view(dtype))
+        return Matrix(tensor.view(dtype))
 
     @staticmethod
     def from_binfile(in_path: str | Path, num:int, dtype: torch.dtype, endianess="little"):
@@ -93,7 +93,7 @@ class HwMatrix:
                 tensor_list.append(tensor_row)
 
         tensor = torch.stack(tensor_list)
-        return HwMatrix(tensor.view(dtype))
+        return Matrix(tensor.view(dtype))
 
     def to_memhexfile(self, out_path: str | Path, endianess="little"):
         # load a tensor and save as memhex that verilog could read

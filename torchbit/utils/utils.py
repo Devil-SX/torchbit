@@ -1,5 +1,5 @@
 import torch
-from .dtype import *
+from ..core.dtype import *
 
 
 def compress(tensor: torch.Tensor):

@@ -20,10 +20,10 @@ if __name__ == "__main__":
             out_path = tmp_path / f"tensor_{dtype}.hex"
 
             # Convert the tensor to a memhex file
-            torchbit.core.HwVector.from_tensor(tensor).to_memhex(out_path)
+            torchbit.core.Vector.from_tensor(tensor).to_memhex(out_path)
 
             # Convert the memhex file back to a tensor
-            converted_tensor = torchbit.core.HwVector.from_memhex(out_path, dtype).tensor
+            converted_tensor = torchbit.core.Vector.from_memhex(out_path, dtype).tensor
 
             # Check if the original tensor and the converted tensor are equal
             if torch.equal(tensor, converted_tensor):
@@ -41,11 +41,11 @@ if __name__ == "__main__":
             tensor = torch.randint(0, 10, (20,), dtype=dtype)
 
             # Convert the tensor to a cocotb value
-            # value = torchbit.core.HwVector.from_tensor(tensor).to_cocotb()
+            # value = torchbit.core.Vector.from_tensor(tensor).to_cocotb()
             value = torchbit.core.tensor_to_cocotb(tensor)
 
             # Convert the cocotb value back to a tensor
-            # converted_tensor = torchbit.core.HwVector.from_cocotb(value, 20, dtype)
+            # converted_tensor = torchbit.core.Vector.from_cocotb(value, 20, dtype)
             converted_tensor = torchbit.core.cocotb_to_tensor(value, 20, dtype)
 
 
