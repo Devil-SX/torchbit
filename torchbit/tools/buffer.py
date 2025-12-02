@@ -3,32 +3,11 @@ from cocotb.triggers import RisingEdge
 import numpy as np
 from ..core.vector import Vector
 from ..core.dtype import dtype_to_bits
+from .port import InputPort, OutputPort
+from ..utils.bit_ops import replicate_bits
 import torch
 import copy
 
-
-class InputPort:
-    def __init__(self, wrapper_signal):
-        self.wrapper = wrapper_signal
-
-    def get(self):
-        if self.wrapper is None:
-            return 0
-        return self.wrapper.value.integer
-
-
-class OutputPort:
-    def __init__(self, wrapper_signal, set_immediately=False):
-        self.wrapper = wrapper_signal
-        self.set_immediately = set_immediately
-
-    def set(self, value):
-        if self.wrapper is None:
-            return
-        if self.set_immediately:
-            self.wrapper.setimmediatevalue(value)
-        else:
-            self.wrapper.value = value
 
 class Buffer:
     def __init__(self, width, depth):
@@ -67,19 +46,6 @@ class Buffer:
         return torch.stack(content_tensor, dim=0)
 
         
-
-def replicate_bits(num: int, n: int) -> int:
-    assert num > 0
-    
-    # Convert number to binary string, removing '0b' prefix
-    binary = bin(n)[2:]
-    
-    # Replicate each bit num times
-    replicated = ''.join(bit * num for bit in binary)
-    
-    # Convert back to integer
-    return int(replicated, 2)
-
 
 def is_trig(value:int, is_pos_trig:bool):
     is_pos = (value != 0)
