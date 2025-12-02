@@ -5,9 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] 
+### Added
+- Tools: Added `struct.py` for `BitField` and `Struct` classes.
+- Examples: Added `test_struct.py` for testing `BitField` and `Struct`.
+- Changed: Moved `InputPort/OutputPort` to `tools/port.py` and `replicate_bits` to `utils/bit_ops.py`.
+- Refactor: Split `utils.py` into `bit_ops.py` and `tensor_ops.py`.
+- Refactor: Renamed `Hensor` to `Vector` and `Hlist` to `Matrix`.
+- Refactor: Restructured package into `core`, `debug`, `tools` subpackages.
+- Refactor: Renamed `get_bit_slice` parameters for clarity.
+
 ## [0.3.1] - 2025-10-18
 ### Added
 - Shape Transform Support.
+- Add `Buffer` test component.
 
 ## [0.2.0] - 2025-06-10
 ### Changed
