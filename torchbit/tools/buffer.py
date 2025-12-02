@@ -1,7 +1,7 @@
 import cocotb
 from cocotb.triggers import RisingEdge
 import numpy as np
-from ..core.hensor import Hensor
+from ..core.hw_vector import HwVector
 from ..core.dtype import dtype_to_bits
 import torch
 import copy
@@ -50,7 +50,7 @@ class Buffer:
         # [addr_start, addr_end)
         assert len(tensor.size()) == 2
         for i in range(addr_start, addr_end):
-            self.content[i] = Hensor.from_tensor(tensor[i - addr_start]).to_cocotb() & ((1 << self.width) - 1)
+            self.content[i] = HwVector.from_tensor(tensor[i - addr_start]).to_cocotb() & ((1 << self.width) - 1)
 
     def dump_to_tensor(self, addr_start, addr_end, dtype):
         # [addr_start, addr_end)
@@ -63,7 +63,7 @@ class Buffer:
 
         content_tensor = []
         for data in sel_content:
-            content_tensor.append(Hensor.from_int(value_int=data, num=self.width // num_bit, dtype=dtype).to_tensor())
+            content_tensor.append(HwVector.from_int(value_int=data, num=self.width // num_bit, dtype=dtype).to_tensor())
         return torch.stack(content_tensor, dim=0)
 
         

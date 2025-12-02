@@ -3,7 +3,7 @@ from os import PathLike
 import torch
 import numpy as np
 import einops
-from ..core.hensor import Hensor
+from ..core.hw_vector import HwVector
 from .buffer import Buffer
 from ..debug.judge import compare
 
@@ -59,7 +59,7 @@ class TestVector:
         tensor_seq = einops.rearrange(
             self.source, self.trans_formula, **self.temp_dim, **self.spat_dim
         )  # [N, M]
-        return [Hensor.from_tensor(tensor).to_cocotb() for tensor in tensor_seq]
+        return [HwVector.from_tensor(tensor).to_cocotb() for tensor in tensor_seq]
 
     def init_buf(self, buf: Buffer):
         addr_list = self.address_mapping.get_addr_list()
@@ -68,7 +68,7 @@ class TestVector:
         )  # [N, M]
 
         for tensor, addr in zip(tensor_seq, addr_list):
-            buf.write(addr, Hensor.from_tensor(tensor).to_cocotb())
+            buf.write(addr, HwVector.from_tensor(tensor).to_cocotb())
 
 
 class GroundTrueResult:
@@ -110,7 +110,7 @@ class GroundTrueResult:
     def from_cocotb_seq(self, cocotb_seq):
         tensor_seq = torch.stack(
             [
-                Hensor.from_cocotb(int_value, self.num, self.dtype).to_tensor()
+                HwVector.from_cocotb(int_value, self.num, self.dtype).to_tensor()
                 for int_value in cocotb_seq
             ]
         )
@@ -123,7 +123,7 @@ class GroundTrueResult:
         addr_list = self.address_mapping.get_addr_list()
         cocotb_seq = [buf.read(addr) for addr in addr_list]
         tensor_seq = [
-            Hensor.from_cocotb(int_value, self.num, self.dtype).to_tensor()
+            HwVector.from_cocotb(int_value, self.num, self.dtype).to_tensor()
             for int_value in cocotb_seq
         ]
         tensor = einops.rearrange(

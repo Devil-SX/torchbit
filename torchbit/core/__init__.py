@@ -1,4 +1,4 @@
 from .dtype import *
-from .hensor import *
-from .hlist import *
+from .hw_vector import *
+from .hw_matrix import *
 from .utils import *

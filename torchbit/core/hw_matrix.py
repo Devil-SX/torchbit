@@ -43,7 +43,7 @@ def to_bytes(arr:np.ndarray, endianess="little"):
     return arr.tobytes()
 
 
-class Hlist:
+class HwMatrix:
     # tensor -> memhex
     # tensor -> int
     # memhex -> tensor
@@ -54,7 +54,7 @@ class Hlist:
 
     @staticmethod
     def from_tensor(tensor: torch.Tensor):
-        return Hlist(tensor)
+        return HwMatrix(tensor)
 
     @staticmethod
     def from_memhexfile(in_path: str | Path, dtype: torch.dtype, endianess="little"):
@@ -74,7 +74,7 @@ class Hlist:
             tensor_list.append(tensor_row)
 
         tensor = torch.stack(tensor_list)
-        return Hlist(tensor.view(dtype))
+        return HwMatrix(tensor.view(dtype))
 
     @staticmethod
     def from_binfile(in_path: str | Path, num:int, dtype: torch.dtype, endianess="little"):
@@ -93,7 +93,7 @@ class Hlist:
                 tensor_list.append(tensor_row)
 
         tensor = torch.stack(tensor_list)
-        return Hlist(tensor.view(dtype))
+        return HwMatrix(tensor.view(dtype))
 
     def to_memhexfile(self, out_path: str | Path, endianess="little"):
         # load a tensor and save as memhex that verilog could read
