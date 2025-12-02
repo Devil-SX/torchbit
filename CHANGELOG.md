@@ -5,15 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] 
+## [1.0.0] - 2025-12-02
 ### Added
-- Tools: Added `struct.py` for `BitField` and `Struct` classes.
-- Examples: Added `test_struct.py` for testing `BitField` and `Struct`.
-- Changed: Moved `InputPort/OutputPort` to `tools/port.py` and `replicate_bits` to `utils/bit_ops.py`.
-- Refactor: Split `utils.py` into `bit_ops.py` and `tensor_ops.py`.
-- Refactor: Renamed `Hensor` to `Vector` and `Hlist` to `Matrix`.
-- Refactor: Restructured package into `core`, `debug`, `tools` subpackages.
-- Refactor: Renamed `get_bit_slice` parameters for clarity.
+- **Tools:** Added `struct.py` with `BitField` and `Struct` classes. `Struct` now supports field access via attributes (e.g., `my_struct.field_name.set_value()`).
+- **Examples:** Added `test_struct.py` for testing `BitField` and `Struct`.
+- **Utils:** Added `bit_ops.py` (containing `replicate_bits`, `get_bit`, `get_bit_slice`) and `tensor_ops.py`.
+
+### Changed
+- **Package Structure:** Restructured the entire package into subpackages:
+    - `torchbit.core`: Contains `dtype`, `vector` (formerly `hensor`), `matrix` (formerly `hlist`).
+    - `torchbit.debug`: Contains `judge`.
+    - `torchbit.tools`: Contains `buffer`, `port`, `shape_process`, `struct`, `transform`.
+    - `torchbit.utils`: Contains `bit_ops`, `tensor_ops`.
+- **Renaming:**
+    - Renamed `Hensor` to `Vector` (`torchbit.core.vector`).
+    - Renamed `Hlist` to `Matrix` (`torchbit.core.matrix`).
+    - Renamed parameters in `get_bit_slice` to `high_close` and `low_close` for clarity.
+- **Moved:**
+    - `InputPort` and `OutputPort` moved from `buffer.py` to `tools/port.py`.
+    - `replicate_bits` moved from `buffer.py` to `utils/bit_ops.py`.
+    - `utils.py` content split into `utils/bit_ops.py` and `utils/tensor_ops.py`.
+
+### Removed
+- Removed flat `torchbit.*` structure for most modules. Now requires explicit subpackage imports (e.g., `from torchbit.core import Vector`).
 
 ## [0.3.1] - 2025-10-18
 ### Added

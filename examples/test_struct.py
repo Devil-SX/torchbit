@@ -12,24 +12,25 @@ def test_bit_field():
 
 def test_struct():
     print("\nTesting Struct...")
-    # Define BitFields
-    bf_a = struct_ops.BitField("a", 4)  # 4 bits
-    bf_b = struct_ops.BitField("b", 8)  # 8 bits
-    bf_c = struct_ops.BitField("c", 2)  # 2 bits
 
-    # Create a Struct
-    my_struct = struct_ops.Struct([bf_a, bf_b, bf_c])
+    # Create a Struct (Recommended instantiation)
+    my_struct = struct_ops.Struct([
+        struct_ops.BitField("a", 4),  # 4 bits
+        struct_ops.BitField("b", 8),  # 8 bits
+        struct_ops.BitField("c", 2)   # 2 bits
+    ])
 
     # Test from_int and to_int
     test_value = 0b11_01010101_1111 # 2 (c) | 8 (b) | 4 (a) = 14 bits total
     my_struct.from_int(test_value)
 
-    assert bf_a.value == 0b1111, f"Struct from_int failed for field a: Expected {0b1111}, Got {bf_a.value}"
-    assert bf_b.value == 0b01010101, f"Struct from_int failed for field b: Expected {0b01010101}, Got {bf_b.value}"
-    assert bf_c.value == 0b11, f"Struct from_int failed for field c: Expected {0b11}, Got {bf_c.value}"
+    # Access fields via attributes
+    assert my_struct.a.value == 0b1111, f"Struct from_int failed for field a: Expected {0b1111}, Got {my_struct.a.value}"
+    assert my_struct.b.value == 0b01010101, f"Struct from_int failed for field b: Expected {0b01010101}, Got {my_struct.b.value}"
+    assert my_struct.c.value == 0b11, f"Struct from_int failed for field c: Expected {0b11}, Got {my_struct.c.value}"
 
-    # Modify a field and convert back to int
-    bf_a.set_value(0b0010)
+    # Modify a field via attribute and convert back to int
+    my_struct.a.set_value(0b0010)
     reconstructed_value = my_struct.to_int()
     
     # Expected: c=0b11, b=0b01010101, a=0b0010
