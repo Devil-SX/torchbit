@@ -13,9 +13,10 @@ class BitField:
         return self._value
     
 
-class Struct:
-    def __init__(self, fields:list[BitField]):
+class BitStruct:
+    def __init__(self, fields:list[BitField], lsb_first: bool):
         self.fields = fields
+        self.lsb_first = lsb_first
         # lsb to msb
         self.total_width = sum(field.width for field in fields)
         
@@ -24,16 +25,18 @@ class Struct:
         
         # Verify unique names
         if len(self._field_map) != len(fields):
-            raise ValueError("Duplicate field names are not allowed in Struct")
+            raise ValueError("Duplicate field names are not allowed in BitStruct")
 
     def __getattr__(self, name):
         if name in self._field_map:
             return self._field_map[name]
-        raise AttributeError(f"'Struct' object has no attribute '{name}'")
+        raise AttributeError(f"'BitStruct' object has no attribute '{name}'")
 
     def from_int(self, value:int):
         shift = 0
-        for field in self.fields:
+        fields_to_process = self.fields if self.lsb_first else reversed(self.fields)
+        
+        for field in fields_to_process:
             mask = (1 << field.width) - 1
             field_value = (value >> shift) & mask
             field.set_value(field_value)
@@ -42,7 +45,9 @@ class Struct:
     def to_int(self) -> int:
         result = 0
         shift = 0
-        for field in self.fields:
+        fields_to_process = self.fields if self.lsb_first else reversed(self.fields)
+
+        for field in fields_to_process:
             result |= (field.value & ((1 << field.width) - 1)) << shift
             shift += field.width
         return result
