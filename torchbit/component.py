@@ -18,13 +18,17 @@ class InputPort:
 
 
 class OutputPort:
-    def __init__(self, wrapper_signal):
+    def __init__(self, wrapper_signal, set_immediately=False):
         self.wrapper = wrapper_signal
+        self.set_immediately = set_immediately
 
     def set(self, value):
         if self.wrapper is None:
             return
-        self.wrapper.value = value
+        if self.set_immediately:
+            self.wrapper.setimmediatevalue(value)
+        else:
+            self.wrapper.value = value
 
 class Buffer:
     def __init__(self, width, depth):
@@ -77,6 +81,10 @@ def replicate_bits(num: int, n: int) -> int:
     return int(replicated, 2)
 
 
+def is_trig(value:int, is_pos_trig:bool):
+    is_pos = (value != 0)
+    return is_pos if is_pos_trig else not is_pos
+
 class TwoPortBuffer(Buffer):
     def __init__(self, width, depth, backpressure=False, wrmask=False, debug=False, postive_trigger=False):
         # width as byte as unit
@@ -84,7 +92,7 @@ class TwoPortBuffer(Buffer):
         self.bp = backpressure
         self.debug = debug
         self.wrmask = wrmask
-        self.trigger_signal = 1 if postive_trigger else 0
+        self.is_pos_trig = postive_trigger
 
     def connect(
         self,
@@ -111,16 +119,16 @@ class TwoPortBuffer(Buffer):
         self.rd_dout = OutputPort(rd_dout)
         self.rd_dout_vld = OutputPort(rd_dout_vld)
         if self.bp:
-            self.wr_ready = OutputPort(wr_ready)
-            self.rd_ready = OutputPort(rd_ready)
+            self.wr_ready = OutputPort(wr_ready, set_immediately=True)
+            self.rd_ready = OutputPort(rd_ready, set_immediately=True)
         if self.wrmask:
             self.wr_mask = InputPort(wr_mask)
 
     async def init(self):
         self.rd_dout_vld.set(0)
         if self.bp:
-            self.wr_ready.set(1)
-            self.rd_ready.set(1)
+            self.wr_ready.set(0)
+            self.rd_ready.set(0)
 
 
     async def run(self):
@@ -128,7 +136,10 @@ class TwoPortBuffer(Buffer):
             await RisingEdge(self.clk)
             # to implement: ready logic
 
-            if self.rd_csb.get() == self.trigger_signal:
+            read_trig = is_trig(self.rd_csb.get(),  self.is_pos_trig)
+            write_trig = is_trig(self.wr_csb.get(),  self.is_pos_trig)
+
+            if read_trig:
                 addr = self.rd_addr.get()
                 self.rd_dout.set(self.content[addr])
                 if self.debug:
@@ -137,7 +148,10 @@ class TwoPortBuffer(Buffer):
             else:
                 self.rd_dout_vld.set(0)
 
-            if self.wr_csb.get() == self.trigger_signal:  # Active low chip select
+            if self.bp:
+                self.rd_ready.set(1 if read_trig else 0)
+
+            if write_trig:
                 addr = self.wr_addr.get() & ((1 << self.addr_width) - 1)
                 data = self.wr_din.get() & ((1 << self.width) - 1)
                 if self.wrmask:
@@ -147,4 +161,7 @@ class TwoPortBuffer(Buffer):
                     self.dut._log.info(f"[TWBUF] write {data}/{self.wr_din.get()} to {addr}")
 
                 self.content[addr] = data
+                
+            if self.bp:
+                self.wr_ready.set(1 if write_trig else 0)
 

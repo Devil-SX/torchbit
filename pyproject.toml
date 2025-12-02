@@ -22,7 +22,7 @@ dependencies = [
   "torch",
   "numpy",
   "matplotlib",
-  "cocotb<2.0.0", # cocotb 2.0.0 update cocotb.runner api
+  "cocotb<2.0.0", # cocotb 2.0.0 update cocotb.runner api--
   "einops"
 ]
 

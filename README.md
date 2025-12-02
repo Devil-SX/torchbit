@@ -1,5 +1,7 @@
 Torchbit, utils for deep learning accelerator verification, convert pytorch tensor to cocotb compatiable / binfile format
 
+![logo](logo.jpg)
+
 # Usage
 
 ```

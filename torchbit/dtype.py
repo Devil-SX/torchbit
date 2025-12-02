@@ -35,3 +35,9 @@ numpy_dtype_to_bits = {
 standard_numpy_dtype = {8: np.int8, 16: np.int16, 32: np.int32, 64: np.int64}
 standard_be_numpy_dtype = {8: ">i1", 16: ">i2", 32: ">i4", 64: ">i8"}
 standard_le_numpy_dtype = {8: "<i1", 16: "<i2", 32: "<i4", 64: "<i8"}
+
+def torch_to_std_dtype(tensor:torch.Tensor):
+    bits = dtype_to_bits[tensor.dtype]
+    std_t_d = standard_torch_dtype[bits]
+    return tensor.view(std_t_d)
+    
