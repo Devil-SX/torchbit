@@ -1,4 +1,4 @@
-import torchbit
+import torchbit as torchbit
 from pathlib import Path
 import torch
 
@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
     def test_tensor2memhex_and_memhex2tensor(tmp_path):
         print("Testing tensor2memhex and memhex2tensor...")
-        dtypes = torchbit.dtype_to_bits.keys()
+        dtypes = torchbit.core.dtype_to_bits.keys()
 
         # Create the directory if it does not exist
         tmp_path.mkdir(parents=True, exist_ok=True)
@@ -20,10 +20,10 @@ if __name__ == "__main__":
             out_path = tmp_path / f"tensor_{dtype}.hex"
 
             # Convert the tensor to a memhex file
-            torchbit.Hensor.from_tensor(tensor).to_memhex(out_path)
+            torchbit.core.Hensor.from_tensor(tensor).to_memhex(out_path)
 
             # Convert the memhex file back to a tensor
-            converted_tensor = torchbit.Hensor.from_memhex(out_path, dtype).tensor
+            converted_tensor = torchbit.core.Hensor.from_memhex(out_path, dtype).tensor
 
             # Check if the original tensor and the converted tensor are equal
             if torch.equal(tensor, converted_tensor):
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     def test_tensor2cocotb_and_cocotb2tensor():
         print("Testing tensor2cocotb and cocotb2tensor...")
-        dtypes = torchbit.dtype_to_bits.keys()
+        dtypes = torchbit.core.dtype_to_bits.keys()
 
         for dtype in dtypes:
             # Create a tensor with the given dtype
@@ -42,11 +42,11 @@ if __name__ == "__main__":
 
             # Convert the tensor to a cocotb value
             # value = torchbit.Hensor.from_tensor(tensor).to_cocotb()
-            value = torchbit.tensor_to_cocotb(tensor)
+            value = torchbit.core.tensor_to_cocotb(tensor)
 
             # Convert the cocotb value back to a tensor
             # converted_tensor = torchbit.Hensor.from_cocotb(value, 20, dtype)
-            converted_tensor = torchbit.cocotb_to_tensor(value, 20, dtype)
+            converted_tensor = torchbit.core.cocotb_to_tensor(value, 20, dtype)
 
 
             # Check if the original tensor and the converted tensor are equal

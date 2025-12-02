@@ -1,8 +1,8 @@
 import cocotb
 from cocotb.triggers import RisingEdge
 import numpy as np
-from .hensor import Hensor
-from .dtype import dtype_to_bits
+from ..core.hensor import Hensor
+from ..core.dtype import dtype_to_bits
 import torch
 import copy
 

@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 from pathlib import Path
-from .dtype import *
+from ..core.dtype import *
 
 def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None, color=None):
     # Data Format

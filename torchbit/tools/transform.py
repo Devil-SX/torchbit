@@ -3,9 +3,9 @@ from os import PathLike
 import torch
 import numpy as np
 import einops
-from .hensor import Hensor
-from .component import Buffer
-from .judge import compare
+from ..core.hensor import Hensor
+from .buffer import Buffer
+from ..debug.judge import compare
 
 # TestVector -> Sequential
 # TestVector -> (addr, Sequential)
