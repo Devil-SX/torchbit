@@ -12,8 +12,12 @@ def get_bit(value:int, num:int):
 
 
 
+
 def get_bit_slice(value: int, high_close: int, low_close: int):
-    return (value >> low_close) & ((1 << (high_close - low_close + 1)) - 1)
+    num_bits = high_close - low_close + 1
+    mask = ((1 << num_bits) - 1) << low_close
+    masked_value = value & mask
+    return masked_value >> low_close
 
 def get_hex(x: torch.Tensor, dtype: torch.dtype=None):
     assert isinstance(x, torch.Tensor)
