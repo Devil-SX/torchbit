@@ -11,8 +11,9 @@ def get_bit(value:int, num:int):
     return (value * 2 **num) % 2
 
 
-def get_bit_slice(value: int, high: int, low: int):
-    return (value >> low) & ((1 << (high - low + 1)) - 1)
+
+def get_bit_slice(value: int, high_close: int, low_close: int):
+    return (value >> low_close) & ((1 << (high_close - low_close + 1)) - 1)
 
 def get_hex(x: torch.Tensor, dtype: torch.dtype=None):
     assert isinstance(x, torch.Tensor)
