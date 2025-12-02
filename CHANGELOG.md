@@ -9,15 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Shape Transform Support.
 
-## [Unreleased] - 2025-06-10
+## [0.2.0] - 2025-06-10
 ### Changed
 - **Verilog Interface:** Changed default endianness from big-endian to little-endian.
 
-## [Unreleased] - 2025-03-24
+## [0.1.0] - 2025-03-24
 ### Added
 - **Verilog Interface:** Added handling for Byte Order conversion between Numpy/Torch and Verilog.
-
-## [Unreleased] - 2025-02-25
 ### Fixed
 - **X/Z Value Support:** Fixed issue where IO values treated as `int` caused issues with `BinaryValue` containing X/Z states.
     - Previously, signals with X/Z were implicitly treated as 0 when accessed via `integer`.
