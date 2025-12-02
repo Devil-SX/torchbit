@@ -14,9 +14,9 @@ if __name__ == "__main__":
 
 
     x = torch.randn(3, 10, dtype=torch.bfloat16)
-    hlist = torchbit.core.Matrix.from_tensor(x)
+    matrix = torchbit.core.Matrix.from_tensor(x)
     bin_file_path = dir_path / "dump.bin"
-    hlist.to_binfile(bin_file_path)
+    matrix.to_binfile(bin_file_path)
 
     y = torchbit.core.Matrix.from_binfile(str(bin_file_path), 3, torch.bfloat16).to_tensor()
     
