@@ -37,6 +37,44 @@ def test_get_bit_slice():
         print(f"  Passed: get_bit_slice({bin(value)}, {high_close}, {low_close}) == {bin(result)}")
     print("get_bit_slice tests passed!")
 
+def test_twos_complement():
+    print("\nTesting twos_complement...")
+    test_cases = [
+        (-1, 8, 255),  # -1 in 8-bit
+        (-2, 8, 254),  # -2 in 8-bit
+        (-128, 8, 128), # Smallest 8-bit signed number
+        (-1, 16, 65535), # -1 in 16-bit
+        (-5, 4, 11),   # -5 in 4-bit (16 + (-5) = 11)
+        (-7, 4, 9), # -7 in 4-bit (16 + (-7) = 9)
+        (-8, 4, 8) # Smallest 4-bit signed number
+    ]
+
+    for value, width, expected_complement in test_cases:
+        result = bit_utils.twos_complement(value, width)
+        assert result == expected_complement, f"twos_complement({value}, {width}): Expected {expected_complement}, Got {result}"
+        print(f"  Passed: twos_complement({value}, {width}) == {result}")
+    
+    # Test cases that should raise assertions (invalid inputs)
+    print("  Testing assertion failures...")
+    # Test case: positive value
+    try:
+        bit_utils.twos_complement(1, 8)
+        assert False, "Should have raised assertion for positive value"
+    except AssertionError as e:
+        print(f"  Passed assertion for positive value: {e}")
+    
+    # Test case: value out of range (too negative)
+    try:
+        bit_utils.twos_complement(-9, 4) # min for 4-bit is -8
+        assert False, "Should have raised assertion for value out of range"
+    except AssertionError as e:
+        print(f"  Passed assertion for value out of range: {e}")
+
+    print("twos_complement tests passed!")
+
+
 if __name__ == "__main__":
     test_get_bit()
     test_get_bit_slice()
+    test_twos_complement()
+

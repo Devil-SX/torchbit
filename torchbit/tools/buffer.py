@@ -1,5 +1,5 @@
 import cocotb
-from cocotb.triggers import RisingEdge
+from cocotb.triggers import RisingEdge, Timer
 import numpy as np
 from ..core.vector import Vector
 from ..core.dtype import dtype_to_bits
@@ -97,13 +97,10 @@ class TwoPortBuffer(Buffer):
             self.rd_ready.set(0)
 
 
-    async def run(self):
+    async def _run_read(self):
         while True:
             await RisingEdge(self.clk)
-            # to implement: ready logic
-
-            read_trig = is_trig(self.rd_csb.get(),  self.is_pos_trig)
-            write_trig = is_trig(self.wr_csb.get(),  self.is_pos_trig)
+            read_trig = is_trig(self.rd_csb.get(), self.is_pos_trig)
 
             if read_trig:
                 addr = self.rd_addr.get()
@@ -117,6 +114,14 @@ class TwoPortBuffer(Buffer):
             if self.bp:
                 self.rd_ready.set(1 if read_trig else 0)
 
+    async def _run_write(self):
+        while True:
+            await RisingEdge(self.clk)
+            write_trig = is_trig(self.wr_csb.get(), self.is_pos_trig)
+
+            if self.bp:
+                self.wr_ready.set(1 if write_trig else 0)
+
             if write_trig:
                 addr = self.wr_addr.get() & ((1 << self.addr_width) - 1)
                 data = self.wr_din.get() & ((1 << self.width) - 1)
@@ -126,8 +131,10 @@ class TwoPortBuffer(Buffer):
                 if self.debug:
                     self.dut._log.info(f"[TWBUF] write {data}/{self.wr_din.get()} to {addr}")
 
+                await Timer(1, "step")
                 self.content[addr] = data
-                
-            if self.bp:
-                self.wr_ready.set(1 if write_trig else 0)
+
+    async def run(self):
+        cocotb.start_soon(self._run_read())
+        cocotb.start_soon(self._run_write())
 

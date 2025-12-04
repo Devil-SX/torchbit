@@ -5,8 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2025-12-04
+### Added
+- **Tools:** Added `sender_collector` module with `Sender` and `Collector` classes for verifying FIFO/Pipeline interfaces using cocotb.
+- **Tools:** Added `inspect()` method to `BitStruct` for visualizing layout and values.
+- **Debug:** Added `temporal_event` module for visualizing simulation events as timing diagrams.
+- **Examples:** Added `test_sender_collector` including a Verilog Pipe implementation and cocotb testbench.
+- **Examples:** Added `test_temporal_event.py` and updated `test_bit_ops.py`.
+- **Runner:** Integrated `runner` module into the main `torchbit` package.
+
 ### Changed
+- **Tools:** Refactored `Buffer` tool to use concurrent processes for read/write logic, better mimicking hardware behavior.
 - **Struct API:** Renamed `Struct` to `BitStruct` to avoid name collision. `BitStruct` constructor now requires a mandatory `lsb_first` (bool) argument to specify field bit order.
 
 ## [1.0.0] - 2025-12-02

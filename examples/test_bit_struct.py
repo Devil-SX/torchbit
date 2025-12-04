@@ -45,6 +45,7 @@ def test_bit_struct():
     assert my_struct.to_int() == test_value, f"BitStruct from_int with overflow failed: Expected {bin(test_value)}, Got {bin(my_struct.to_int())}"
 
     print("BitStruct tests (LSB First) passed!")
+    my_struct.inspect()
 
     print("\nTesting BitStruct (MSB First)...")
     # Create a BitStruct (MSB First)
@@ -72,7 +73,8 @@ def test_bit_struct():
     
     assert msb_struct.to_int() == msb_val, "MSB BitStruct to_int failed"
     print("BitStruct tests (MSB First) passed!")
+    msb_struct.inspect()
 
 if __name__ == "__main__":
     test_bit_field()
-    test_struct()
+    test_bit_struct()

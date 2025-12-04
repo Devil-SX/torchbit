@@ -19,6 +19,9 @@ def get_bit_slice(value: int, high_close: int, low_close: int):
     masked_value = value & mask
     return masked_value >> low_close
 
+
+
+
 def replicate_bits(num: int, n: int) -> int:
     assert num > 0
     
@@ -30,5 +33,17 @@ def replicate_bits(num: int, n: int) -> int:
     
     # Convert back to integer
     return int(replicated, 2)
+
+
+def twos_complement(value: int, width: int) -> int:
+    assert isinstance(value, int)
+    assert isinstance(width, int) and width > 0
+    assert value < 0, "Value must be negative for two's complement calculation"
+    # Ensure the absolute value can be represented within width-1 bits (for signed representation)
+    # The smallest negative number representable with `width` bits is -(1 << (width - 1))
+    assert abs(value) <= (1 << (width - 1)), f"Value {value} is out of range for {width} bits signed representation"
+    
+    # Two's complement for a negative number is (1 << width) + value
+    return (1 << width) + value
 
 

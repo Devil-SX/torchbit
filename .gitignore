@@ -131,3 +131,8 @@ TODO
 
 *.bin
 */obj_dir
+
+GEMINI.md
+CLAUDE.md
+
+sim*
