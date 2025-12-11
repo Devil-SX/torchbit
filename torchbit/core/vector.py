@@ -1,4 +1,4 @@
-import cocotb.binary
+import cocotb.types
 import torch
 import numpy as np
 import cocotb
@@ -41,16 +41,16 @@ class Vector:
             return Vector(torch.from_numpy(vec).view(dtype))
 
     @staticmethod
-    def from_cocotb(value: cocotb.binary.BinaryValue | int, num: int, dtype: torch.dtype):
+    def from_cocotb(value: cocotb.types.LogicArray | int, num: int, dtype: torch.dtype):
         assert isinstance(
-            value, cocotb.binary.BinaryValue
-        ) or isinstance(value, int), "value must be a cocotb binary value or int value, use Vector.from_cocotb(dut.io_xxx.value)"
+            value, cocotb.types.LogicArray
+        ) or isinstance(value, int), "value must be a cocotb logicarray value or int value, use Vector.from_cocotb(dut.io_xxx.value)"
 
-        if isinstance(value, cocotb.binary.BinaryValue) and (("x" in value.binstr) or ("z" in value.binstr)):
+        if isinstance(value, cocotb.types.LogicArray) and (("x" in value.binstr) or ("z" in value.binstr)):
             print("Warning: value is a X/Z value, use the zero result")
             return Vector(torch.zeros(num, dtype=dtype))
 
-        value_int = value.integer if isinstance(value, cocotb.binary.BinaryValue) else value
+        value_int = value.integer if isinstance(value, cocotb.types.LogicArray) else value
         return Vector.from_int(value_int, num, dtype)
 
     def to_cocotb(self):
@@ -77,14 +77,14 @@ class Vector:
 
 def tensor_to_cocotb(tensor:torch.Tensor):
     """
-    Shortcut function to convert tensor to cocotb binary value
+    Shortcut function to convert tensor to cocotb logicarray value
     """
 
     return Vector.from_tensor(tensor).to_cocotb()
 
 
-def cocotb_to_tensor(value: cocotb.binary.BinaryValue, num: int, dtype: torch.dtype):
+def cocotb_to_tensor(value: cocotb.types.LogicArray, num: int, dtype: torch.dtype):
     """
-    Shortcut function to convert cocotb binary value to tensor
+    Shortcut function to convert cocotb logicarray value to tensor
     """
     return Vector.from_cocotb(value, num, dtype).to_tensor()

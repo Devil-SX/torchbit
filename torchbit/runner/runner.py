@@ -1,6 +1,8 @@
-from cocotb.runner import get_runner
+
 from .config import *
 from pathlib import Path
+from cocotb_tools.runner import get_runner
+
 
 class Runner:
     def __init__(self, file_config:FileConfig, build_config:BuildConfig, current_dir:Path=Path(".")):

@@ -1,4 +1,4 @@
-import cocotb.binary
+import cocotb.types
 import torch
 import numpy as np
 import cocotb
