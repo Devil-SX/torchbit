@@ -58,34 +58,21 @@ class Collector:
         self.data = []
         self.timestamps = []
 
-    def connect(self, dut, clk, data, valid, ready=None, valid_is_empty=False):
+    def connect(self, dut, clk, data, valid):
         self.dut = dut
         self.clk = clk
         self.data_port = InputPort(data)
         self.valid_port = InputPort(valid)
-        self.ready_port = OutputPort(ready) if ready is not None else None
-        self.valid_is_empty = valid_is_empty
 
     async def run(self, stop_event: Event):
-        # Assert ready if connected (Always ready/read logic)
-        if self.ready_port is not None:
-            self.ready_port.set(1)
+        # Collector now implicitly assumes it's always ready to receive, as 'ready' output was removed.
 
         while not stop_event.is_set():
             await RisingEdge(self.clk)
             
-            # Check valid/empty
+            # Check valid
             v_val = self.valid_port.get()
-            is_valid = False
-            
-            if self.valid_is_empty:
-                # If signal is EMPTY, 0 means Data Available (Valid)
-                if v_val == 0: 
-                    is_valid = True
-            else:
-                # Normal VALID, 1 means Data Available
-                if v_val != 0: 
-                    is_valid = True
+            is_valid = (v_val == 1) # Hardcoded to check for active-high valid
             
             if is_valid:
                 val = self.data_port.get()
@@ -94,10 +81,7 @@ class Collector:
                 self.timestamps.append(t)
                 if self.debug:
                     self.dut._log.info(f"[Collector] Collected {val} at {t}")
-        
-        # Cleanup
-        if self.ready_port is not None:
-            self.ready_port.set(0)
+        # Cleanup: No ready_port to set to 0.
 
     def dump(self):
         return self.data

@@ -15,6 +15,8 @@ class Runner:
 
     def test(self, test_module:str):
         build_dir = self.current_dir / f"sim_{self.file_config.name}_{self.build_config.name}_{test_module}"
+
+        
         runner = get_runner(self.backend)
         # Cocotb > 1.8 dump wave problem https://github.com/cocotb/cocotb/issues/3894#issuecomment-2249133550
         # Best practice: Cocotb = 1.8.1, Verilator = 5.024

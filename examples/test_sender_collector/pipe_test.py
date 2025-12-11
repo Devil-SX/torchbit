@@ -22,8 +22,8 @@ class PipeWrapper:
         self.sender.connect(self.dut, self.dut.clk, self.dut.din, self.dut.din_vld, full=None)
         
         # Collector connects to Output of Pipe
-        # Pipe output is valid/data. Pass None for ready if Pipe doesn't accept backpressure
-        self.collector.connect(self.dut, self.dut.clk, self.dut.dout, self.dut.dout_vld, ready=None)
+        # Pipe output is valid/data. No ready port is passed to Collector as its interface simplified
+        self.collector.connect(self.dut, self.dut.clk, self.dut.dout, self.dut.dout_vld)
 
 file_config = FileConfig(
     name="pipe_test",

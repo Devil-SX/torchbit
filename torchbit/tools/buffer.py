@@ -17,13 +17,16 @@ class Buffer:
         self.addr_width = np.log2(depth).astype(int)
         self.width = width
         self.depth = depth
-        self.content = [0] * depth
+        self.clear()
 
     def write(self, addr, int_value):
         self.content[addr] = int_value
     
     def read(self, addr):
         return self.content[addr]
+    
+    def clear(self):
+        self.content = [0] * self.depth
 
     def init_from_tensor(self, addr_start, addr_end, tensor):
         # [addr_start, addr_end)

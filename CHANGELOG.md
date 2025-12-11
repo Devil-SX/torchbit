@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-11
+### Added
+- **Tools:** Added `clear()` method to `Buffer`.
+- **Debug:** Exposed `Signal`, `SignalGroup`, and `generate_gtkwave_tcl` in `torchbit.debug` for better wave dump control.
+
+### Changed
+- **Struct API:** Major refactor of `BitStruct`. It now acts as a factory returning a class, allowing cleaner instantiation (e.g., `MyStruct = BitStruct(...)` then `s = MyStruct()`).
+- **Struct API:** Added support for setting field values via attributes (e.g., `struct.field = 0x5`).
+- **Tools:** Simplified `Collector` class in `sender_collector`. Removed `ready` backpressure simulation (now always ready) and `valid_is_empty` configuration (now strictly active-high valid).
+
 ## [1.1.0] - 2025-12-04
 ### Added
 - **Tools:** Added `sender_collector` module with `Sender` and `Collector` classes for verifying FIFO/Pipeline interfaces using cocotb.

@@ -14,11 +14,13 @@ def test_bit_struct():
     print("\nTesting BitStruct (LSB First)...")
 
     # Create a BitStruct (Recommended instantiation)
-    my_struct = struct_ops.BitStruct([
+    MyStruct = struct_ops.BitStruct(fields=[
         struct_ops.BitField("a", 4),  # 4 bits (LSB)
         struct_ops.BitField("b", 8),  # 8 bits
         struct_ops.BitField("c", 2)   # 2 bits (MSB)
     ], lsb_first=True)
+
+    my_struct = MyStruct()
 
     # Test from_int and to_int
     test_value = 0b11_01010101_1111 # 2 (c) | 8 (b) | 4 (a) = 14 bits total
@@ -47,16 +49,29 @@ def test_bit_struct():
     print("BitStruct tests (LSB First) passed!")
     my_struct.inspect()
 
+    # Test __setattr__ functionality
+    print("\nTesting BitStruct __setattr__...")
+    my_struct.a = 0b0101 # Set 'a' directly
+    assert my_struct.a.value == 0b0101, f"BitStruct __setattr__ failed: Expected {0b0101}, Got {my_struct.a.value}"
+    # Verify to_int still works after direct assignment
+    new_reconstructed_value = my_struct.to_int()
+    # Expected: c=0b11, b=0b01010101, a=0b0101
+    expected_new_reconstructed_value = (0b11 << (4 + 8)) | (0b01010101 << 4) | 0b0101
+    assert new_reconstructed_value == expected_new_reconstructed_value, f"BitStruct to_int after __setattr__ failed: Expected {bin(expected_new_reconstructed_value)}, Got {bin(new_reconstructed_value)}"
+    print("BitStruct __setattr__ test passed!")
+
     print("\nTesting BitStruct (MSB First)...")
     # Create a BitStruct (MSB First)
     # List order: a, b, c. 
     # If MSB first: a is MSB, c is LSB.
     # Value layout: [a (4)] [b (8)] [c (2)]
-    msb_struct = struct_ops.BitStruct([
+    MsbStruct = struct_ops.BitStruct(fields=[
         struct_ops.BitField("a", 4),  
         struct_ops.BitField("b", 8),  
         struct_ops.BitField("c", 2)   
     ], lsb_first=False)
+
+    msb_struct = MsbStruct()
 
     # Construct value: a=0b1111, b=0b01010101, c=0b11
     # Binary: 1111 01010101 11
