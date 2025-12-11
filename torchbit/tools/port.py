@@ -5,7 +5,7 @@ class InputPort:
     def get(self):
         if self.wrapper is None:
             return 0
-        return self.wrapper.value.integer
+        return int(self.wrapper.value)
 
 
 class OutputPort:

@@ -50,7 +50,7 @@ class Vector:
             print("Warning: value is a X/Z value, use the zero result")
             return Vector(torch.zeros(num, dtype=dtype))
 
-        value_int = value.integer if isinstance(value, cocotb.types.LogicArray) else value
+        value_int = int(value) if (isinstance(value, cocotb.types.LogicArray) or isinstance(value, cocotb.types.Logic)) else value
         return Vector.from_int(value_int, num, dtype)
 
     def to_cocotb(self):

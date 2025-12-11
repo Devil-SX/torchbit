@@ -10,9 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dependencies:** Bumped `cocotb` version requirement to `>=2.0.0`.
 - **Core:** Replaced `cocotb.binary.BinaryValue` with `cocotb.types.LogicArray` in `Vector` and `Matrix` classes to support Cocotb 2.0.
 - **Runner:** Switched to `cocotb_tools.runner` for `get_runner`.
+- **Core:** Enhanced `Vector.from_cocotb()` to handle both `cocotb.types.LogicArray` and `cocotb.types.Logic` by converting them to `int` uniformly.
+- **Tools:** Renamed `Collector` to `PoolCollector` in `sender_collector.py` to better reflect its always-ready behavior.
+- **Tools:** Enhanced `Sender.run()` to support optional `stop_event` parameter for controlled stopping.
+- **Tools:** Updated `InputPort.get()` to use `int(self.wrapper.value)` instead of `value.integer` for better compatibility with Cocotb 2.0.
+- **Runner:** Refactored `BuildConfig` to use modular simulator-specific build args classes (`VerilatorBuildArgs` and `VCSBuildArgs`).
+- **Runner:** Renamed `DEFAULT_BUILD_CONFIG` to `DEFAULT_VERILATOR_BUILD_CONFIG` for clarity.
 
 ### Added
 - **Core:** Added version check for `cocotb >= 2.0.0` at package initialization.
+- **Tools:** Added new `FIFOCollector` class in `sender_collector.py` for FIFO interfaces with empty/ready signals.
+- **Runner:** Added VCS backend support with `VCSBuildArgs` class and automatic FST wave dump generation.
+- **Runner:** Added `DEFAULT_VCS_BUILD_CONFIG` for VCS simulator configuration.
+- **Runner:** Added `generate_vcs_dump_wave()` helper function to automatically create wave dump module for VCS.
 
 ## [1.2.0] - 2025-12-11
 ### Added

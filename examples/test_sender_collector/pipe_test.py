@@ -1,7 +1,7 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Event
-from torchbit.tools import Sender, Collector
+from torchbit.tools import Sender, PoolCollector
 from torchbit.runner import Runner, FileConfig, BuildConfig
 import random
 from pathlib import Path
@@ -14,15 +14,15 @@ class PipeWrapper:
     def __init__(self, dut):
         self.dut = dut
         self.sender = Sender(debug=True)
-        self.collector = Collector(debug=True)
+        self.collector = PoolCollector(debug=True)
 
     def connect(self):
         # Sender connects to Input of Pipe
         # Pipe has no backpressure/ready, so pass None for full
         self.sender.connect(self.dut, self.dut.clk, self.dut.din, self.dut.din_vld, full=None)
         
-        # Collector connects to Output of Pipe
-        # Pipe output is valid/data. No ready port is passed to Collector as its interface simplified
+        # PoolCollector connects to Output of Pipe
+        # Pipe output is valid/data. No ready port is passed to PoolCollector as its interface simplified
         self.collector.connect(self.dut, self.dut.clk, self.dut.dout, self.dut.dout_vld)
 
 file_config = FileConfig(
@@ -88,10 +88,10 @@ async def run_test(dut):
 
     temporal_event.draw_temporal_event_seqs(
         path=graph_path,
-        names=["Sender Valid", "Collector Valid"],
+        names=["Sender Valid", "PoolCollector Valid"],
         seqs=[sender_times, collector_times],
         unit="sim_steps",
-        title="Pipe Sender/Collector Timing"
+        title="Pipe Sender/PoolCollector Timing"
     )
     
     dut._log.info(f"Test Passed! Timing graph saved to {graph_path}")
