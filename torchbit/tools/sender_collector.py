@@ -1,6 +1,7 @@
 import cocotb
 from cocotb.triggers import RisingEdge, Event, Timer
 from cocotb.utils import get_sim_time
+from cocotb.handle import Immediate
 from .port import InputPort, OutputPort
 
 class Sender:
@@ -113,7 +114,7 @@ class FIFOCollector:
 
     async def run(self, stop_event: Event):
         # Collector now implicitly assumes it's always ready to receive, as 'ready' output was removed.
-        self.ready_port.set(0)
+        self.ready_port.set(Immediate(0))
 
         last_ready = 0
         cur_ready = 0
@@ -123,10 +124,10 @@ class FIFOCollector:
 
             empty = self.empty_port.get()
             if not empty:
-                self.ready_port.set(1)
+                self.ready_port.set(Immediate(1))
                 cur_ready = 1
             else:
-                self.ready_port.set(0)
+                self.ready_port.set(Immediate(0))
                 cur_ready = 0
             
             # Check valid
@@ -134,6 +135,7 @@ class FIFOCollector:
             if self.valid_port is not None:
                 v_val = self.valid_port.get()
             else:
+                # Valid set after next ready
                 v_val = last_ready
             if self.debug:
                 self.dut._log.info(f"[Collector] Valid {v_val} at {t}")

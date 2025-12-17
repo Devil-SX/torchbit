@@ -20,6 +20,22 @@ def get_bit_slice(value: int, high_close: int, low_close: int):
     return masked_value >> low_close
 
 
+def signed(value: int, width: int) -> int:
+    assert isinstance(value, int)
+    assert isinstance(width, int) and width > 0
+    sign_bit = 1 << (width - 1)
+    if value & sign_bit:
+        # Negative number
+        return value - (1 << width)
+    else:
+        # Positive number
+        return value
+
+
+def unsigned(value: int, width: int) -> int:
+    assert isinstance(value, int)
+    assert isinstance(width, int) and width > 0
+    return value & ((1 << width) - 1)
 
 
 def replicate_bits(num: int, n: int) -> int:

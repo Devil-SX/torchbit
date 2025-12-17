@@ -28,6 +28,9 @@ def BitStruct(fields: list[BitField], lsb_first: bool = True):
                 raise ValueError("Duplicate field names are not allowed in BitStruct")
 
         def __getattr__(self, name):
+            # Avoid infinite recursion during deepcopy by checking __dict__ directly
+            if name.startswith('__') and name.endswith('__'):
+                raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
             if name in self._field_map:
                 return self._field_map[name]
             raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
@@ -37,6 +40,21 @@ def BitStruct(fields: list[BitField], lsb_first: bool = True):
                 self._field_map[name].set_value(value)
             else:
                 object.__setattr__(self, name, value)
+
+        def __getstate__(self):
+            # Return the state for pickling/deepcopy
+            # We need to return all instance attributes
+            return {
+                'fields': self.fields,
+                'lsb_first': self.lsb_first,
+                'total_width': self.total_width,
+                '_field_map': self._field_map
+            }
+
+        def __setstate__(self, state):
+            # Restore the state during unpickling/deepcopy
+            # Directly set __dict__ to avoid triggering __setattr__
+            self.__dict__.update(state)
 
         def from_int(self, value:int):
             shift = 0

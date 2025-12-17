@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tools:** Updated `InputPort.get()` to use `int(self.wrapper.value)` instead of `value.integer` for better compatibility with Cocotb 2.0.
 - **Runner:** Refactored `BuildConfig` to use modular simulator-specific build args classes (`VerilatorBuildArgs` and `VCSBuildArgs`).
 - **Runner:** Renamed `DEFAULT_BUILD_CONFIG` to `DEFAULT_VERILATOR_BUILD_CONFIG` for clarity.
+- **Core:** Improved `BitStruct` to support deep copying and pickling by implementing `__getstate__` and `__setstate__`.
+- **Tools:** Modified `FIFOCollector` to use `cocotb.handle.Immediate` for setting `ready` port, ensuring immediate value updates in simulation.
 
 ### Added
 - **Core:** Added version check for `cocotb >= 2.0.0` at package initialization.
@@ -23,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Runner:** Added VCS backend support with `VCSBuildArgs` class and automatic FST wave dump generation.
 - **Runner:** Added `DEFAULT_VCS_BUILD_CONFIG` for VCS simulator configuration.
 - **Runner:** Added `generate_vcs_dump_wave()` helper function to automatically create wave dump module for VCS.
+- **Debug:** Added `compare_bit_struct` function in `torchbit.debug` to compare two `BitStruct` objects and report field-level mismatches.
+- **Utils:** Added `signed` and `unsigned` conversion functions to `bit_ops.py`.
+- **Examples:** Added `test_bit_struct_comparator.py` to test the `compare_bit_struct` function.
 
 ## [1.2.0] - 2025-12-11
 ### Added
