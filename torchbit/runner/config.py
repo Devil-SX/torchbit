@@ -58,7 +58,7 @@ class VerilatorBuildArgs:
         build_args += ["-j", str(self.compiler_threads)]
         build_args += ["--threads", str(self.runtime_threads)]
         if self.trace:
-            build_args += ["--trace", "--trace-fst", "--trace-structs"]
+            build_args += ["--trace", "--trace-fst"]
         build_args += ["--timing"] # Added to support timing delays in afifo.sv
         return build_args
 

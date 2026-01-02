@@ -31,8 +31,6 @@ class Runner:
 
         
         runner = get_runner(self.backend)
-        # Cocotb > 1.8 dump wave problem https://github.com/cocotb/cocotb/issues/3894#issuecomment-2249133550
-        # Best practice: Cocotb = 1.8.1, Verilator = 5.024
         runner.build(
             verilog_sources=self.sources,
             hdl_toplevel=self.top_design,

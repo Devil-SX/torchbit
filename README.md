@@ -27,7 +27,16 @@ cd torchbit
 pip install -e .
 ```
 
-The main branch is currently maintained for environments using `cocotb >= 2.x`, Verilator, and VCS.
+The main branch is currently maintained for environments using `cocotb >= 2.x`, Verilator >= 5.036, and VCS.
+
+## Compatibility
+
+| OS | Cocotb  | Simulator | Status | Notes |
+|----|---------|-----------|--------|-------|
+| WSL Ubuntu 22.04 | 2.0.0 | Verilator 5.038 | ✅ |  |
+| WSL Ubuntu 22.04 | 2.0.0 | Verilator 5.036 | ❌ | fst assert failed, see [this issue](https://github.com/cocotb/cocotb/issues/4522) |
+| CentOS 7 | 2.0.0 | VCS | ✅ |  |
+
 
 ## Basic Concept
 
