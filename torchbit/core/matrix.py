@@ -1,3 +1,11 @@
+"""
+2D tensor conversion utilities for memory-mapped hardware verification.
+
+Provides the Matrix class for converting between PyTorch 2D tensors and
+memory files (hex/bin) used with Verilog $readmemh/$writememh and similar
+system tasks. Essential for verifying memory-mapped IP blocks and loading
+initial memory contents.
+"""
 import cocotb.types
 import torch
 import numpy as np
@@ -6,7 +14,32 @@ from pathlib import Path
 from .dtype import *
 from ..utils.bit_ops import *
 
-def read_arr(bytes, bit_length:int, endianess="little"):
+
+def read_arr(bytes_data: bytes, bit_length: int, endianess: str = "little") -> np.ndarray:
+    """Convert bytes to a numpy array with specified bit length.
+
+    Reads raw byte data and converts it to a numpy array of the specified
+    bit width. Handles endianness conversion between the byte data and
+    the resulting array representation.
+
+    Args:
+        bytes_data: Raw byte data to convert.
+        bit_length: Bit width of each element (8, 16, 32, 64).
+        endianess: Byte order of the input data. Either "little" or "big".
+            Defaults to "little".
+
+    Returns:
+        A numpy array with the converted values.
+
+    Raises:
+        AssertionError: If endianess is not "little" or "big".
+
+    Example:
+        >>> import torch
+        >>> data = bytes.fromhex("41424344")
+        >>> arr = read_arr(data, 8, "little")
+        >>> # arr contains [0x44, 0x43, 0x42, 0x41] for little-endian
+    """
     assert endianess in ["little", "big"], f"endianess must be 'little' or 'big', got {endianess}"
     # bigendian bytes -> numpy little end array
     numpy_dtype = standard_numpy_dtype[bit_length]
@@ -14,7 +47,7 @@ def read_arr(bytes, bit_length:int, endianess="little"):
         be_numpy_dtype = standard_be_numpy_dtype[bit_length]
     else:
         be_numpy_dtype = standard_le_numpy_dtype[bit_length]
-    arr = np.frombuffer(bytes, dtype=be_numpy_dtype)
+    arr = np.frombuffer(bytes_data, dtype=be_numpy_dtype)
     arr = arr.astype(numpy_dtype)
     if endianess == "big":
         arr = np.flip(arr, 0).copy()
@@ -22,7 +55,26 @@ def read_arr(bytes, bit_length:int, endianess="little"):
         arr = arr.copy()
     return arr
 
-def to_bytes(arr:np.ndarray, endianess="little"):
+
+def to_bytes(arr: np.ndarray, endianess: str = "little") -> bytes:
+    """Convert a numpy array to bytes with specified bit length.
+
+    Converts a numpy array to raw byte data with proper endianness handling.
+    The array is first converted to the appropriate big-endian format for
+    output.
+
+    Args:
+        arr: 1D numpy array to convert.
+        endianess: Byte order for the output. Either "little" or "big".
+            Defaults to "little".
+
+    Returns:
+        Raw byte data representing the array.
+
+    Raises:
+        AssertionError: If endianess is not "little" or "big", or if array
+            has more than 1 dimension, or if dtype is unsupported.
+    """
     assert endianess in ["little", "big"], f"endianess must be 'little' or 'big', got {endianess}"
     # numpy little end array -> bigendian bytes
     assert len(arr.shape) <= 1
@@ -44,20 +96,118 @@ def to_bytes(arr:np.ndarray, endianess="little"):
 
 
 class Matrix:
-    # tensor -> memhex
-    # tensor -> int
-    # memhex -> tensor
-    # int -> tensor
+    """A 2D tensor wrapper for memory-mapped hardware verification.
+
+    Matrix handles 2D tensors for verifying memory-mapped interfaces.
+    It supports reading/writing to memory hex files and binary files
+    commonly used with Verilog $readmemh/$writememh.
+
+    The Matrix class is designed for:
+    - Loading initial memory contents from files
+    - Dumping simulation results to files
+    - Verifying memory-mapped IP blocks
+    - Creating test vectors for memory-based accelerators
+
+    Attributes:
+        tensor (torch.Tensor): The underlying 2D PyTorch tensor.
+
+    Raises:
+        AssertionError: If tensor does not have exactly 2 dimensions.
+
+    Example:
+        >>> import torch
+        >>> from torchbit.core import Matrix
+        >>>
+        >>> # Load from memory hex file
+        >>> matrix = Matrix.from_memhexfile("memory.hex", torch.float32)
+        >>> print(matrix.tensor.shape)  # e.g., torch.Size([256, 4])
+        >>>
+        >>> # Dump to memory hex file
+        >>> matrix.to_memhexfile("output.hex")
+        >>>
+        >>> # Create from tensor
+        >>> tensor = torch.randn(256, 4)
+        >>> matrix = Matrix.from_tensor(tensor)
+
+    Typical usage in Cocotb tests:
+        >>> @cocotb.test
+        >>> async def test_memory(dut):
+        >>>     # Load memory contents
+        >>>     mem_matrix = Matrix.from_memhexfile("init.hex", torch.float32)
+        >>>     await dut.mem_init.value  # Signal that memory is ready
+        >>>
+        >>>     # Read memory through interface
+        >>>     results = []
+        >>>     for addr in range(256):
+        >>>         dut.addr.value = addr
+        >>>         await RisingEdge(dut.clk)
+        >>>         results.append(dut.data_out.value)
+    """
+
     def __init__(self, tensor: torch.Tensor = None):
+        """Initialize a Matrix with a 2D tensor.
+
+        Args:
+            tensor: A 2D PyTorch tensor. Must have exactly 2 dimensions.
+
+        Raises:
+            AssertionError: If tensor does not have exactly 2 dimensions.
+        """
         assert len(tensor.shape) == 2
         self.tensor = tensor
 
     @staticmethod
-    def from_tensor(tensor: torch.Tensor):
+    def from_tensor(tensor: torch.Tensor) -> "Matrix":
+        """Create a Matrix from a 2D PyTorch tensor.
+
+        Args:
+            tensor: A 2D PyTorch tensor of any supported dtype.
+
+        Returns:
+            A new Matrix instance containing the tensor.
+
+        Raises:
+            AssertionError: If tensor does not have exactly 2 dimensions.
+
+        Example:
+            >>> import torch
+            >>> from torchbit.core import Matrix
+            >>> tensor = torch.randn(256, 4)
+            >>> matrix = Matrix.from_tensor(tensor)
+        """
         return Matrix(tensor)
 
     @staticmethod
-    def from_memhexfile(in_path: str | Path, dtype: torch.dtype, endianess="little"):
+    def from_memhexfile(in_path: str | Path, dtype: torch.dtype, endianess: str = "little") -> "Matrix":
+        """Create a Matrix by reading a memory hex file.
+
+        Reads a file in $readmemh format and converts to a 2D tensor.
+        Each line in the hex file becomes one row in the matrix.
+
+        The hex file format expects one hexadecimal value per line,
+        optionally with underscores for readability.
+
+        Args:
+            in_path: Path to the hex file. Each line should contain
+                a hexadecimal value (e.g., "3f800000").
+            dtype: PyTorch dtype for tensor elements.
+            endianess: Byte order of the hex data. Either "little" or "big".
+                Defaults to "little".
+
+        Returns:
+            A new Matrix instance with the loaded tensor.
+
+        Raises:
+            AssertionError: If dtype is unsupported or file format is invalid.
+
+        Example:
+            >>> matrix = Matrix.from_memhexfile("data.hex", torch.float32)
+            >>> # hex file contents:
+            >>> # 00000000
+            >>> # 3f800000
+            >>> # 40000000
+            >>> # ...
+        """
         # get the bit length of dtype
         assert dtype in dtype_to_bits.keys()
         bit_length = dtype_to_bits[dtype]
@@ -77,12 +227,35 @@ class Matrix:
         return Matrix(tensor.view(dtype))
 
     @staticmethod
-    def from_binfile(in_path: str | Path, num:int, dtype: torch.dtype, endianess="little"):
+    def from_binfile(in_path: str | Path, num: int, dtype: torch.dtype, endianess: str = "little") -> "Matrix":
+        """Create a Matrix by reading a binary file.
+
+        Reads raw binary data and converts to a 2D tensor.
+        Each read operation produces `num` elements per row.
+
+        Args:
+            in_path: Path to the binary file.
+            num: Number of elements per row. The file size should be
+                divisible by (num * bit_length / 8).
+            dtype: PyTorch dtype for tensor elements.
+            endianess: Byte order of the binary data. Either "little" or "big".
+                Defaults to "little".
+
+        Returns:
+            A new Matrix instance with the loaded tensor.
+
+        Raises:
+            AssertionError: If dtype is unsupported.
+
+        Example:
+            >>> # Read binary data, 16 elements per row
+            >>> matrix = Matrix.from_binfile("data.bin", num=16, dtype=torch.float32)
+        """
         assert dtype in dtype_to_bits.keys()
         bit_length = dtype_to_bits[dtype]
 
         # read a binary file and convert to tensor
-        with open(in_path, "rb") as f:  # 以二进制模式打开文件
+        with open(in_path, "rb") as f:
             tensor_list = []
             while True:
                 byte_data = f.read(bit_length * num // 8)
@@ -95,7 +268,30 @@ class Matrix:
         tensor = torch.stack(tensor_list)
         return Matrix(tensor.view(dtype))
 
-    def to_memhexfile(self, out_path: str | Path, endianess="little"):
+    def to_memhexfile(self, out_path: str | Path, endianess: str = "little") -> None:
+        """Write the Matrix to a memory hex file.
+
+        Dumps the 2D tensor to a file in $readmemh compatible format.
+        Each tensor row becomes one line in the hex file containing
+        the hexadecimal representation of that row.
+
+        Args:
+            out_path: Path to write the hex file. Parent directories
+                will be created if they don't exist.
+            endianess: Byte order for the output. Either "little" or "big".
+                Defaults to "little".
+
+        Raises:
+            AssertionError: If tensor is not 2D or dtype is unsupported.
+
+        Example:
+            >>> matrix.to_memhexfile("output.hex")
+            >>> # produces:
+            >>> # 00000000
+            >>> # 3f800000
+            >>> # 40000000
+            >>> # ...
+        """
         # load a tensor and save as memhex that verilog could read
         # assert is a 2D tensor
         tensor = self.tensor
@@ -115,7 +311,24 @@ class Matrix:
                 hex_row = to_bytes(tensor_row, endianess).hex()
                 f.write(hex_row + "\n")
 
-    def to_binfile(self, out_path: str | Path, endianess="little"):
+    def to_binfile(self, out_path: str | Path, endianess: str = "little") -> None:
+        """Write the Matrix to a binary file.
+
+        Dumps the 2D tensor to a raw binary file.
+        Each tensor row is written as a sequence of bytes.
+
+        Args:
+            out_path: Path to write the binary file. Parent directories
+                will be created if they don't exist.
+            endianess: Byte order for the output. Either "little" or "big".
+                Defaults to "little".
+
+        Raises:
+            AssertionError: If tensor is not 2D or dtype is unsupported.
+
+        Example:
+            >>> matrix.to_binfile("output.bin")
+        """
         # load a tensor and save as binary that verilog could read
         # assert is a 2D tensor
         tensor = self.tensor
@@ -130,10 +343,19 @@ class Matrix:
 
         output_path = Path(out_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(out_path, "wb") as f:  # 修改为二进制写模式
+        with open(out_path, "wb") as f:
             for tensor_row in tensor_numpy:
                 byte_row = to_bytes(tensor_row, endianess)
                 f.write(byte_row)
 
-    def to_tensor(self):
+    def to_tensor(self) -> torch.Tensor:
+        """Get the underlying PyTorch tensor.
+
+        Returns:
+            The 2D PyTorch tensor stored in this Matrix.
+
+        Example:
+            >>> matrix = Matrix.from_tensor(torch.randn(256, 4))
+            >>> tensor = matrix.to_tensor()
+        """
         return self.tensor

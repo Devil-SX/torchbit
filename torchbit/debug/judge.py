@@ -1,9 +1,76 @@
+"""
+Tensor comparison utilities for verification.
+
+Provides the compare function for comparing testbench outputs with golden
+references, computing detailed metrics and optionally generating visualizations.
+"""
 import torch
 import numpy as np
 from pathlib import Path
 from ..core.dtype import *
 
-def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None, color=None):
+
+def compare(input, other, rtol: float = 1e-3, atol: float = 1e-1, visualize: bool = False, save_path: str = None, color: str = None) -> bool:
+    """Compare two tensors or arrays with detailed metrics.
+
+    Performs floating-point comparison with relative and absolute tolerance.
+    Prints comprehensive comparison metrics and optionally generates
+    a histogram visualization comparing the distributions.
+
+    Args:
+        input: First tensor or numpy array (testbench output).
+        other: Second tensor or numpy array (golden reference).
+        rtol: Relative tolerance for comparison. Default: 1e-3.
+              The comparison uses torch.allclose(input, other, rtol=rtol, atol=atol).
+        atol: Absolute tolerance for comparison. Default: 1e-1.
+        visualize: If True, display or save histogram comparison plot.
+                   Default: False.
+        save_path: Path to save visualization image. If None, shows plot.
+                   Parent directories will be created if they don't exist.
+        color: If "green" or "red", print colored result. Default: None.
+
+    Returns:
+        bool: True if tensors are within tolerance (is_close), False otherwise.
+
+    Raises:
+        AssertionError: If input types differ or shapes don't match.
+
+    Metrics printed:
+        - Shape: Tensor dimensions
+        - Max abs diff: Maximum absolute difference with location (index tuple)
+          and values (floating-point and hex representations)
+        - Max rel diff: Maximum relative difference with location
+        - Mean rel diff: Average relative difference across all elements
+        - MSE: Mean Squared Error
+        - rtol/atol: Tolerance settings used
+        - Is equal: Final pass/fail result (with optional color)
+
+    Example:
+        >>> import torch
+        >>> from torchbit.debug import compare
+        >>>
+        >>> # Create test data
+        >>> golden = torch.randn(100, 100)
+        >>> result = torch.randn(100, 100) * 0.999  # Slightly different
+        >>>
+        >>> is_equal = compare(golden, result, rtol=1e-3, atol=1e-1)
+        Shape: torch.Size([100, 100])
+        Max abs diff:  0.0042 at (45, 67) ...
+        Is equal: True
+        >>>
+        >>> # With visualization
+        >>> compare(golden, result, visualize=True, save_path="comparison.png")
+        >>>
+        >>> # With colored output
+        >>> compare(golden, result, color="green")  # Green if pass, red if fail
+
+    Notes:
+        - Both inputs are converted to float32 for comparison
+        - Original dtypes are preserved for hex value reporting
+        - The location is reported as (row, col, ...) for multi-dimensional tensors
+        - Zero elements are handled specially in relative difference calculation
+          (uses absolute difference when input is zero)
+    """
     # Data Format
     all_is_numpy = isinstance(input, np.ndarray) and isinstance(other, np.ndarray)
     all_is_torch = isinstance(input, torch.Tensor) and isinstance(other, torch.Tensor)
@@ -66,7 +133,7 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None,
     print(f"Is equal: {is_equal_str}")
 
     if visualize:
-        import matplotlib.pyplot as plt  
+        import matplotlib.pyplot as plt
         input_np = input.numpy().flatten()
         other_np = other.numpy().flatten()
 
@@ -83,8 +150,9 @@ def compare(input, other, rtol=1e-3, atol=1e-1, visualize=False, save_path=None,
             plt.savefig(save_path)
         else:
             plt.show()
-    
+
     return is_equal
+
 
 if __name__ == "__main__":
     import torch
