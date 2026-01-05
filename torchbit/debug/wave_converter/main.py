@@ -131,13 +131,16 @@ def _sample_and_write(
         # Get signal names
         signal_names = parser.get_signal_names()
 
-        # Sample at posedge
+        # Sample at posedge (clk is removed from sampled signals internally)
         result = parser.sample_posedge(clk, signal_names)
+
+        # Remove clk from signal_names for header to match sampled data
+        sampled_signal_names = [s for s in signal_names if s != clk]
 
         # Write CSV
         _write_csv(
             output_path, result,
-            signal_names, format, delimiter
+            sampled_signal_names, format, delimiter
         )
 
         return len(result.timestamps)

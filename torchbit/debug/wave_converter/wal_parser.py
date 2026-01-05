@@ -2,6 +2,7 @@
 WAL-based waveform parsing utilities.
 
 Provides efficient posedge sampling of waveform files.
+Uses the new wal API (0.8+) with direct trace methods for better abstraction.
 """
 
 from typing import List, Optional, Any, Tuple
@@ -25,6 +26,9 @@ class WalParser:
     Waveform parser using WAL (Waveform Analysis Language).
 
     Supports FST and VCD formats directly.
+
+    This implementation uses the new wal API (0.8+) with direct trace methods
+    instead of complex WAL queries, providing cleaner abstractions.
     """
 
     def __init__(self, wave_path: str):
@@ -39,11 +43,13 @@ class WalParser:
         """
         from wal.core import TraceContainer
         from wal.eval import SEval
-        from wal.core import read_wal_sexpr
 
         self._container = None
         self._evaluator = None
-        self._wal_parse = staticmethod(read_wal_sexpr)
+        self._trace = None
+        self._wave_path = None
+        self._window_start = None
+        self._window_end = None
 
         self.load(wave_path)
 
@@ -58,6 +64,12 @@ class WalParser:
         self._evaluator = SEval(self._container)
         self._wave_path = wave_path
 
+        # Get the trace object (VCD/FST trace)
+        traces = list(self._container.traces.values())
+        if not traces:
+            raise WalParserError(f"No traces found in waveform file: {wave_path}")
+        self._trace = traces[0]
+
     def set_window(self, time_start: Optional[float] = None,
                    time_end: Optional[float] = None) -> None:
         """
@@ -66,8 +78,28 @@ class WalParser:
         Args:
             time_start: Start time (None = from beginning).
             time_end: End time (None = to end).
+
+        Note: In the new wal API, this is implemented as index filtering
+        rather than trace modification.
         """
-        self._container.set_window(time_start, time_end)
+        self._window_start = time_start
+        self._window_end = time_end
+
+    def _filter_indices_by_window(self, indices: List[int]) -> List[int]:
+        """Filter indices based on time window."""
+        if self._window_start is None and self._window_end is None:
+            return indices
+
+        timestamps = self._trace.timestamps
+        filtered = []
+        for idx in indices:
+            ts = timestamps[idx]
+            if self._window_start is not None and ts < self._window_start:
+                continue
+            if self._window_end is not None and ts > self._window_end:
+                continue
+            filtered.append(idx)
+        return filtered
 
     def get_signal_names(self, include_internal: bool = False) -> List[str]:
         """
@@ -79,10 +111,78 @@ class WalParser:
         Returns:
             List of signal names.
         """
-        names = self._container.get_all_signal_names()
+        names = self._container.signals
         if not include_internal:
             names = [n for n in names if not n.startswith("$")]
         return names
+
+    def _find_posedge_indices(self, clk_name: str) -> List[int]:
+        """
+        Find indices where clock has rising edge.
+
+        A rising edge is where clk=1 and previous clk=0.
+
+        Args:
+            clk_name: Clock signal name.
+
+        Returns:
+            List of indices where posedge occurs.
+        """
+        from wal.core import read_wal_sexpr
+
+        # Find all indices where clk=1
+        clk_high_query = f'(find (= {clk_name} 1))'
+        parsed = read_wal_sexpr(clk_high_query)
+        clk_high_indices = self._evaluator.eval(parsed)
+
+        # Filter to only posedge (clk=1 and previous clk=0)
+        posedge_indices = []
+        for idx in clk_high_indices:
+            if idx == 0:
+                continue  # Can't be posedge at index 0
+            prev_val = self._trace.signal_value(clk_name, idx - 1)
+            if prev_val == 0:
+                posedge_indices.append(idx)
+
+        return self._filter_indices_by_window(posedge_indices)
+
+    def _find_posedge_indices_with_condition(
+        self, clk_name: str, condition: str
+    ) -> List[int]:
+        """
+        Find indices where clock has rising edge AND condition is true.
+
+        Args:
+            clk_name: Clock signal name.
+            condition: WAL condition expression (e.g., "(= top.valid 1)").
+
+        Returns:
+            List of indices where posedge with condition occurs.
+        """
+        from wal.core import read_wal_sexpr
+
+        # Find all indices where clk=1
+        clk_high_query = f'(find (= {clk_name} 1))'
+        parsed = read_wal_sexpr(clk_high_query)
+        clk_high_indices = self._evaluator.eval(parsed)
+
+        # Find indices where condition is true
+        cond_query = f'(find {condition})'
+        parsed = read_wal_sexpr(cond_query)
+        cond_indices = set(self._evaluator.eval(parsed))
+
+        # Filter to posedge where condition is also true
+        posedge_indices = []
+        for idx in clk_high_indices:
+            if idx == 0:
+                continue
+            if idx not in cond_indices:
+                continue
+            prev_val = self._trace.signal_value(clk_name, idx - 1)
+            if prev_val == 0:
+                posedge_indices.append(idx)
+
+        return self._filter_indices_by_window(posedge_indices)
 
     def sample_posedge(self, clk_name: str,
                        signal_names: Optional[List[str]] = None) -> SampleResult:
@@ -99,16 +199,20 @@ class WalParser:
         if signal_names is None:
             signal_names = self.get_signal_names()
 
-        # Build WAL query
-        wal_query = self._build_posedge_query(clk_name, signal_names)
+        # Remove clock from signal names to avoid duplicate
+        signal_names = [s for s in signal_names if s != clk_name]
 
-        # Execute query
-        parsed_expr = self._wal_parse(wal_query)
-        result = self._evaluator.eval(parsed_expr)
+        # Find posedge indices
+        posedge_indices = self._find_posedge_indices(clk_name)
 
-        # Parse result: list of [time, sig1, sig2, ...]
-        timestamps = [row[0] for row in result]
-        signal_values = [row[1:] for row in result]
+        # Sample signals at those indices
+        timestamps = []
+        signal_values = []
+
+        for idx in posedge_indices:
+            timestamps.append(self._trace.timestamps[idx])
+            row = [self._trace.signal_value(sig, idx) for sig in signal_names]
+            signal_values.append(row)
 
         return SampleResult(timestamps=timestamps, signals=signal_values)
 
@@ -121,6 +225,7 @@ class WalParser:
         Args:
             clk_name: Clock signal name for posedge detection.
             condition: Additional condition string (e.g., "valid == 1").
+                Should be a WAL expression like "(= top.valid 1)".
             signal_names: List of signals to sample. If None, samples all.
 
         Returns:
@@ -129,88 +234,38 @@ class WalParser:
         if signal_names is None:
             signal_names = self.get_signal_names()
 
-        # Build WAL query with condition
-        wal_query = self._build_posedge_query_with_condition(
-            clk_name, condition, signal_names
+        # Remove clock from signal names to avoid duplicate
+        signal_names = [s for s in signal_names if s != clk_name]
+
+        # Find posedge indices with condition
+        posedge_indices = self._find_posedge_indices_with_condition(
+            clk_name, condition
         )
 
-        # Execute query
-        parsed_expr = self._wal_parse(wal_query)
-        result = self._evaluator.eval(parsed_expr)
+        # Sample signals at those indices
+        timestamps = []
+        signal_values = []
 
-        # Parse result: list of [time, sig1, sig2, ...]
-        timestamps = [row[0] for row in result]
-        signal_values = [row[1:] for row in result]
+        for idx in posedge_indices:
+            timestamps.append(self._trace.timestamps[idx])
+            row = [self._trace.signal_value(sig, idx) for sig in signal_names]
+            signal_values.append(row)
 
         return SampleResult(timestamps=timestamps, signals=signal_values)
-
-    def _build_posedge_query(self, clk_name: str,
-                             signal_names: List[str]) -> str:
-        """
-        Build WAL query for posedge sampling.
-
-        Query pattern:
-        (find (&& (= clk 1) (= (prev clk) 0)))  - find posedge
-        (at t signal_name)                      - sample signal at time t
-        """
-        at_calls = "\n          ".join(
-            f"(at t {name})" for name in signal_names
-        )
-
-        wal_query = f"""
-        (list
-          (map
-            (lambda (t)
-              (list
-                t
-                {at_calls}
-              )
-            )
-            (find (&& (= {clk_name} 1) (= (prev {clk_name}) 0)))
-          )
-        )
-        """
-        return wal_query
-
-    def _build_posedge_query_with_condition(self, clk_name: str,
-                                            condition: str,
-                                            signal_names: List[str]) -> str:
-        """
-        Build WAL query for posedge sampling with additional condition.
-
-        Args:
-            clk_name: Clock signal name.
-            condition: Additional condition string.
-            signal_names: List of signals to sample.
-        """
-        at_calls = "\n          ".join(
-            f"(at t {name})" for name in signal_names
-        )
-
-        wal_query = f"""
-        (list
-          (map
-            (lambda (t)
-              (list
-                t
-                {at_calls}
-              )
-            )
-            (find (&& (= {clk_name} 1) (= (prev {clk_name}) 0) {condition}))
-          )
-        )
-        """
-        return wal_query
 
     @property
     def time_range(self) -> Tuple[float, float]:
         """Get (start_time, end_time) of waveform."""
-        return self._container.time_range()
+        timestamps = self._trace.timestamps
+        if not timestamps:
+            return (0, 0)
+        return (timestamps[0], timestamps[-1])
 
     def close(self) -> None:
         """Release waveform resources."""
         self._container = None
         self._evaluator = None
+        self._trace = None
 
     def __enter__(self):
         return self
@@ -256,9 +311,12 @@ def analyze_valid_data(waveform_path: str, clk_name: str, valid_name: str,
         ...     print(f"  t={t}, data={hex(d)}")
     """
     with WalParser(waveform_path) as parser:
+        # Build condition for valid=1
+        condition = f"(= {valid_name} 1)"
+
         result = parser.sample_posedge_with_condition(
             clk_name,
-            f"(= {valid_name} 1)",
+            condition,
             [data_name]
         )
 

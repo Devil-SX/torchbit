@@ -78,6 +78,7 @@ class AddressMapping:
         return addrs
 
 
+@dataclass
 class TileMapping:
     """Defines tensor-to-memory tiling and rearrangement.
 
@@ -151,8 +152,15 @@ class TileMapping:
 
         # Number of elements per temporal unit (spatial size)
         self.num = int(np.prod(list(self.hw_spat_dim.values())))
-        self.sw_to_hw_formula = f"{self.sw_einops} -> {self.hw_einops}"
-        self.hw_to_sw_formula = f"{self.hw_einops} -> {self.sw_einops}"
+
+        # Build einops formulas by extracting LHS of sw_einops and RHS of hw_einops
+        sw_lhs = self.sw_einops.split(" -> ")[0] if " -> " in self.sw_einops else self.sw_einops
+        hw_rhs = self.hw_einops.split(" -> ")[1] if " -> " in self.hw_einops else self.hw_einops
+        sw_rhs = self.sw_einops.split(" -> ")[1] if " -> " in self.sw_einops else self.sw_einops
+        hw_lhs = self.hw_einops.split(" -> ")[0] if " -> " in self.hw_einops else self.hw_einops
+
+        self.sw_to_hw_formula = f"{sw_lhs} -> {hw_rhs}"
+        self.hw_to_sw_formula = f"{hw_lhs} -> {sw_rhs}"
 
         if self.strides is not None:
             self.address_mapping = AddressMapping(
