@@ -164,7 +164,7 @@ class Buffer:
             addr_end = -1
 
         sel_content = copy.deepcopy(self.content[addr_start:addr_end])
-        num_bit = dtype_to_bits(dtype)
+        num_bit = dtype_to_bits[dtype]
 
         content_tensor = []
         for data in sel_content:

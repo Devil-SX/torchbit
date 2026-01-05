@@ -78,6 +78,7 @@ class AddressMapping:
         return addrs
 
 
+@dataclass
 class TileMapping:
     """Defines tensor-to-memory tiling and rearrangement.
 
@@ -151,13 +152,69 @@ class TileMapping:
 
         # Number of elements per temporal unit (spatial size)
         self.num = int(np.prod(list(self.hw_spat_dim.values())))
-        self.sw_to_hw_formula = f"{self.sw_einops} -> {self.hw_einops}"
-        self.hw_to_sw_formula = f"{self.hw_einops} -> {self.sw_einops}"
+
+        # Create einops transformation formulas
+        # The key requirement: output must be 2D with temporal dims as separate axes
+        # and spatial dims combined into a single contiguous axis
+
+        sw_input, sw_output = self.sw_einops.split("->")
+        sw_input = sw_input.strip()
+        sw_output = sw_output.strip()
+
+        hw_input, hw_output = self.hw_einops.split("->")
+        hw_input = hw_input.strip()
+        hw_output = hw_output.strip()
+
+        # For sw_to_hw: we need to transform the input tensor to a 2D format
+        # where temporal dimensions are kept as separate axes and spatial dims are combined
+        # The pattern should be: "input_dims -> temp_dim1 temp_dim2 ... (spat_dim1 spat_dim2 ...)"
+        temp_dims = list(self.hw_temp_dim.keys())
+        spat_dims = list(self.hw_spat_dim.keys())
+
+        # Build the output pattern with temporal dims first, then combined spatial dims
+        if len(spat_dims) == 1:
+            combined_spat = spat_dims[0]
+        else:
+            combined_spat = "(" + " ".join(spat_dims) + ")"
+
+        if temp_dims:
+            hw_layout_2d = " ".join(temp_dims) + " " + combined_spat
+        else:
+            hw_layout_2d = combined_spat
+
+        self.sw_to_hw_formula = f"{sw_input} -> {hw_layout_2d}"
+
+        # For hw_to_sw: reverse from 2D format back to original layout
+        # The input pattern is the same as hw_layout_2d (temp dims + combined spatial)
+        if len(temp_dims) == 1:
+            temp_input = temp_dims[0]
+        else:
+            temp_input = "(" + " ".join(temp_dims) + ")"
+
+        if temp_dims and spat_dims:
+            hw_input_2d = temp_input + " " + combined_spat
+        elif temp_dims:
+            hw_input_2d = temp_input
+        else:
+            hw_input_2d = combined_spat
+
+        self.hw_to_sw_formula = f"{hw_input_2d} -> {sw_output}"
 
         if self.strides is not None:
+            # User-provided strides
             self.address_mapping = AddressMapping(
                 self.base_addr,
                 tuple(self.strides.values()),
+                tuple(self.hw_temp_dim.values()),
+            )
+        else:
+            # Default: sequential addresses for each temporal unit
+            # Each temporal unit maps to a contiguous block
+            spacial_size = self.num  # Elements per temporal unit
+            strides = tuple(spacial_size for _ in self.hw_temp_dim.values())
+            self.address_mapping = AddressMapping(
+                self.base_addr,
+                strides,
                 tuple(self.hw_temp_dim.values()),
             )
 
