@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Examples:** Reorganized examples into 5 structured directories:
+  - `01_basic_runner` - Basic Runner setup with simple counter DUT
+  - `02_data_convert` - Vector/Matrix conversion demonstrations (no DUT)
+  - `03_bit_struct` - BitStruct usage examples
+  - `04_sender_collector` - Sender/Collector pattern with pipeline DUT
+  - `05_buffer` - TwoPortBuffer usage with memory mover DUT
+- **Examples:** Added `05_buffer` example demonstrating TwoPortBuffer as shared memory with:
+  - Memory mover DUT that copies data between memory regions
+  - TwoPortBuffer for backdoor memory access (init/read operations)
+  - Full chip_verification skill format (wrapper, golden model, test cases, main.py)
+- **Examples:** Added main `examples/README.md` with overview of all examples
+- **Tests:** Added comprehensive test suite in `tests/` directory:
+  - `test_vector.py` - Vector class tests (38 tests)
+  - `test_matrix.py` - Matrix class tests (57 tests)
+  - `test_ports.py` - InputPort/OutputPort tests (24 tests)
+  - `test_sender_collector.py` - Sender/Collector tests (27 tests)
+  - `test_runner.py` - Runner and configuration tests (18 tests)
+
+### Removed
+- **Examples:** Removed old flat example structure:
+  - `test_bit_ops.py`, `test_bit_struct.py`, `test_bit_struct_comparator.py`
+  - `test_matrix.py`, `test_matrix_with_verilog.py`
+  - `test_temporal_event.py`, `test_vector.py`, `test_wavetool.py`
+  - `test_sender_collector/` directory (moved to `04_sender_collector/`)
+
 ## [2.0.0] - 2025-12-22
 ### Changed
 - **Dependencies:** Bumped `cocotb` version requirement to `>=2.0.0`.

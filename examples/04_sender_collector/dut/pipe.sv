@@ -1,3 +1,8 @@
+// Pipeline DUT for Sender/Collector Example
+//
+// This module implements a simple parameterized pipeline with configurable
+// width and delay. Used to demonstrate the Sender and Collector classes.
+
 module Pipe #(
     parameter WIDTH = 32,
     parameter DELAY = 4
