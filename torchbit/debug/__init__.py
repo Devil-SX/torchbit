@@ -22,6 +22,11 @@ from .bit_struct_comparator import compare_bit_struct
 # Waveform conversion utilities
 from .wave_converter import (
     convert_wave_to_text,
+    convert_fsdb_to_fst,
+    posedge_dump_to_csv,
+    list_signals,
+    check_signals,
+    count_edges,
     FsdbConverter,
     WalParser,
     SampleResult,
@@ -44,6 +49,11 @@ __all__ = [
 
     # Waveform conversion
     "convert_wave_to_text",
+    "convert_fsdb_to_fst",
+    "posedge_dump_to_csv",
+    "list_signals",
+    "check_signals",
+    "count_edges",
     "FsdbConverter",
     "WalParser",
     "SampleResult",

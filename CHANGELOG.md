@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Debug:** Added new `waveform_tool.py` module with waveform analysis functions: `posedge_dump_to_csv()`, `list_signals()`, `check_signals()`, and `count_edges()`.
+- **Debug:** Added `convert_fsdb_to_fst()` function to `file_converter.py` for FSDB to FST format conversion.
+- **Debug:** Added support for flexible output in waveform tools - functions can output to stdout or file.
+
+### Removed
+- **Debug:** Removed `main.py` from wave_converter module. Functions moved to `file_converter.py` and `waveform_tool.py`.
+
+### Changed
+- **Debug:** Reorganized wave_converter module structure for better separation of concerns:
+  - `file_converter.py`: Format conversion and high-level workflow
+  - `wal_parser.py`: Basic WAL parsing
+  - `waveform_tool.py`: Waveform analysis tools
+- **Debug:** `posedge_dump_to_csv()` now supports optional `signal_list` parameter (defaults to all signals) and stdout output.
+
 ## [2.0.0] - 2025-12-22
 ### Changed
 - **Dependencies:** Bumped `cocotb` version requirement to `>=2.0.0`.
