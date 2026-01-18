@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `test_ports.py` - InputPort/OutputPort tests (24 tests)
   - `test_sender_collector.py` - Sender/Collector tests (27 tests)
   - `test_runner.py` - Runner and configuration tests (18 tests)
+- **Debug:** Added new `waveform_tool.py` module with waveform analysis functions: `posedge_dump_to_csv()`, `list_signals()`, `check_signals()`, and `count_edges()`.
+- **Debug:** Added `convert_fsdb_to_fst()` function to `file_converter.py` for FSDB to FST format conversion.
+- **Debug:** Added support for flexible output in waveform tools - functions can output to stdout or file.
 
 ### Removed
 - **Examples:** Removed old flat example structure:
@@ -32,6 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `test_matrix.py`, `test_matrix_with_verilog.py`
   - `test_temporal_event.py`, `test_vector.py`, `test_wavetool.py`
   - `test_sender_collector/` directory (moved to `04_sender_collector/`)
+- **Debug:** Removed `main.py` from wave_converter module. Functions moved to `file_converter.py` and `waveform_tool.py`.
+
+### Changed
+- **Debug:** Reorganized wave_converter module structure for better separation of concerns:
+  - `file_converter.py`: Format conversion and high-level workflow
+  - `wal_parser.py`: Basic WAL parsing
+  - `waveform_tool.py`: Waveform analysis tools
+- **Debug:** `posedge_dump_to_csv()` now supports optional `signal_list` parameter (defaults to all signals) and stdout output.
 
 ## [2.0.0] - 2025-12-22
 ### Changed

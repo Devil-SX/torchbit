@@ -4,14 +4,16 @@ Waveform conversion utilities.
 Converts VCD/FST/FSDB waveforms to CSV with posedge sampling.
 
 Modules:
-    - file_converter: FSDB to FST conversion
+    - file_converter: FSDB to FST conversion and high-level workflow
     - wal_parser: WAL-based waveform parsing
-    - main: High-level conversion interface
+    - waveform_tool: Waveform analysis tools
 """
 
 from .file_converter import (
     FsdbConverter,
-    FsdbConverterError
+    FsdbConverterError,
+    convert_fsdb_to_fst,
+    convert_wave_to_text,
 )
 
 from .wal_parser import (
@@ -21,13 +23,23 @@ from .wal_parser import (
     analyze_valid_data
 )
 
-from .main import (
-    convert_wave_to_text
+from .waveform_tool import (
+    posedge_dump_to_csv,
+    list_signals,
+    check_signals,
+    count_edges,
 )
 
 __all__ = [
-    # Main interface
+    # Main interface (from file_converter)
     "convert_wave_to_text",
+    "convert_fsdb_to_fst",
+
+    # Waveform analysis tools
+    "posedge_dump_to_csv",
+    "list_signals",
+    "check_signals",
+    "count_edges",
 
     # Classes (for advanced usage)
     "FsdbConverter",
