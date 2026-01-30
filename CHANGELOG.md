@@ -37,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Documentation:** Added English translation of `golden_model_recommend.md` with AI accelerator Golden Model best practices.
+- **Commands:** Enhanced `commit` command to create git tags for version releases (e.g., `v2.1.0`).
+
+### Changed
+- **Documentation:** Polished `golden_model_recomd.md` with better structure, fixed markdown links, and improved language flow.
 - **Tests:** Added `test_buffer_backdoor_performance.py` with performance benchmarks for Buffer backdoor operations.
 - **Tests:** Added profiling tests using cProfile to identify bottlenecks in backdoor operations.
 - **Tests:** Added `tests/reports/` directory with markdown performance reports including profiling breakdown.

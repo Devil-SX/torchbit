@@ -12,8 +12,8 @@ Analyze git diff, update CHANGELOG.md, then commit and push changes.
 
 | Prompt | Action |
 |--------|--------|
-| omitted / empty | Update CHANGELOG.md → commit → push |
-| `version` | Update version + CHANGELOG.md → commit → push |
+| omitted / empty | Update CHANGELOG.md → commit → push (no tag) |
+| `version` | Update version + CHANGELOG.md → commit → push + **create git tag** |
 
 ## Steps
 
@@ -52,8 +52,9 @@ Review all changed files and use judgment to determine if they are appropriate t
 1. Read current version from `pyproject.toml`
 2. Bump version (patch by default, e.g., `2.0.0` → `2.0.1`)
 3. Update version in `pyproject.toml`
-4. Create new version section in CHANGELOG.md with today's date
-5. Move unreleased entries under the new version header
+4. Store the new version for later git tag creation
+5. Create new version section in CHANGELOG.md with today's date
+6. Move unreleased entries under the new version header
 
 ### 5. Commit & Push
 
@@ -61,9 +62,14 @@ Review all changed files and use judgment to determine if they are appropriate t
 2. Generate a commit message based on the diff
 3. Commit with the generated message
 4. Push to remote with `git push`
+5. **If prompt was `version` (release commit):**
+   - Create an annotated git tag: `git tag -a v<version> -m "Release v<version>"`
+   - Push the tag to remote: `git push origin v<version>`
 
 ## Notes
 
 - Version bump uses patch level by default (x.y.0 → x.y.1)
 - Date format: YYYY-MM-DD
 - Follows Keep a Changelog format
+- **Git tags are only created for `version` commits**, not for unreleased commits
+- Git tags use the format `v<version>` (e.g., `v2.1.0`)
