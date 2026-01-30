@@ -37,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Tests:** Added `test_buffer_backdoor_performance.py` with performance benchmarks for Buffer backdoor operations.
+- **Tests:** Added profiling tests using cProfile to identify bottlenecks in backdoor operations.
+- **Tests:** Added `tests/reports/` directory with markdown performance reports including profiling breakdown.
+- **Commands:** Added `add_test` command for generating tests with optional performance profiling.
 - **Examples:** Reorganized examples into 5 structured directories:
   - `01_basic_runner` - Basic Runner setup with simple counter DUT
   - `02_data_convert` - Vector/Matrix conversion demonstrations (no DUT)
