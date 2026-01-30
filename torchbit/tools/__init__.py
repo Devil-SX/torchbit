@@ -27,6 +27,7 @@ Core Concepts:
    - OutputPort: Write wrapper with immediate value option
 
 6. pad/depad: Tensor padding utilities for memory alignment
+   NOTE: These have moved to torchbit.tiling module
 
 Example:
     >>> from torchbit.tools import Buffer, Sender, TileMapping
@@ -62,8 +63,9 @@ Typical workflow:
     6. Compare with golden model using torchbit.debug.compare()
 """
 from .buffer import *
-from .shape_process import *
-from .mapping import *
 from .port import *
 from .bit_struct import *
 from .sender_collector import *
+
+# Re-export tiling module for backward compatibility
+from ..tiling import *

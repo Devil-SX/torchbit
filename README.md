@@ -1,5 +1,7 @@
 <h1 align="center">Torchbit</h1>
 
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
 Torchbit provides utilities for deep learning accelerator verification, facilitating the conversion of PyTorch tensors into Cocotb-compatible formats.
 
 **Why Torchbit?** AI accelerator development should prioritize Python.
@@ -29,8 +31,6 @@ pip install -e .
 
 The main branch is currently maintained for environments using `cocotb >= 2.x`, Verilator >= 5.036, and VCS.
 
-## Development
-
 
 
 ## Compatibility
@@ -42,11 +42,15 @@ The main branch is currently maintained for environments using `cocotb >= 2.x`, 
 | CentOS 7 | 2.0.0 | VCS | ✅ |  |
 
 
-## Basic Concept
+# Philosophy
 
-[Vector](./torchbit/core/vector.py) is a specialized 1D Tensor and serves as the fundamental data type. The `Vector` class acts as the interface between PyTorch Tensors and Cocotb LogicArrays or Verilog multi-bit interfaces.
+Tensor processing involves two key aspects: value processing and shape processing. Value processing deals with mapping various torch-supported data formats (float, signed, unsigned, brain-float) to Verilog bits. Shape processing includes complex Tilling transformations and other processes. For underlying value transformation principles, refer to [value.md](./doc/en/value.md). For tilling design principles, refer to [tilling_schedule.md](./doc/en/tilling_schedule.md).
 
-### Tensor -> Cocotb
+# Basic Data Structure
+
+[Vector](./torchbit/core/vector.py) is a specialized 1D Tensor and serves as the fundamental data type. The `Vector` class acts as the interface between PyTorch Tensors and Cocotb LogicArrays or Verilog multi-bit interfaces. 
+
+## Tensor -> Cocotb
 
 For example, to convert a Tensor `x` (length 5, `torch.float32`) into a Verilog signal—resulting in a 5x32=160-bit signal—and drive it into a 160-bit wide interface `dut.io_din`:
 
@@ -72,7 +76,7 @@ from torchbit.core import tensor_to_cocotb
 dut.io_din.value = tensor_to_cocotb(x) # wrapper of Vector.from_tensor().to_cocotb()
 ```
 
-### Cocotb -> Tensor
+## Cocotb -> Tensor
 
 Similarly, to read a Tensor `x` (length 5, `torch.float32`) from a 160-bit wide interface `dut.io_dout`:
 
@@ -139,20 +143,4 @@ Then, simply run `python top_test.py`. After execution, a `sim_xx` folder will b
 The `.fsdb` file stores the runtime database. You can view the corresponding source code directly by running `verdi -ssf dump.fsdb`.
 
 
-# Advanced Usage
 
-
-## Tiling / Padding
-
-> todo
-
-## IP
-
-> todo
-
-- FIFO
-- Buffer
-
-## Debug Tools
-
-> todo

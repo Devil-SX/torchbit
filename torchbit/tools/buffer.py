@@ -11,7 +11,7 @@ import numpy as np
 from ..core.vector import Vector
 from ..core.dtype import dtype_to_bits
 from .port import InputPort, OutputPort
-from .mapping import TileMapping
+from ..tiling import TileMapping
 from ..utils.bit_ops import replicate_bits
 import torch
 import einops
@@ -52,27 +52,28 @@ class Buffer:
         >>> value = buf.read(0x100)
         >>> # value == 0xDEADBEEF
         >>>
-        >>> # Initialize from matrix
+        >>> # Backdoor: Load from matrix
         >>> mat = torch.randn(256, 4)  # 256 rows, 4 elements per row
-        >>> buf.init_from_matrix(0, 256, mat)
+        >>> buf.backdoor_load_matrix(0, 256, mat)
         >>>
-        >>> # Dump back to tensor
-        >>> result = buf.dump_to_matrix(0, 256, torch.float32)
+        >>> # Backdoor: Dump back to tensor
+        >>> result = buf.backdoor_dump_matrix(0, 256, torch.float32)
 
-    Integration with TileMapping:
+    Integration with TileMapping (backdoor operations):
         >>> from torchbit.tools import Buffer, TileMapping
         >>> buf = Buffer(width=128, depth=1024)
         >>> mapping = TileMapping(
         ...     dtype=torch.float32,
-        ...     sw_einops="c h w -> c h w",
-        ...     hw_einops="c h w -> (c h w)",
+        ...     sw_einops="c h w",
+        ...     hw_einops="c (h w)",
         ...     hw_temp_dim={"c": 3},
         ...     hw_spat_dim={"h": 32, "w": 32},
         ...     base_addr=0,
-        ...     strides={"c": 1024, "h": 32, "w": 4}
+        ...     strides={"c": 1024}
         ... )
         >>> tensor = torch.randn(3, 32, 32)
-        >>> buf.init_from_tensor(tensor, mapping)
+        >>> buf.backdoor_load_tensor(tensor, mapping)
+        >>> recovered = buf.backdoor_dump_tensor(mapping)
     """
 
     def __init__(self, width: int, depth: int):
@@ -113,15 +114,56 @@ class Buffer:
         """
         return self.content[addr]
 
+    def backdoor_read(self, addr_list: list[int]) -> list[int]:
+        """Read multiple addresses in parallel (backdoor operation).
+
+        Direct software-side access to read multiple buffer locations
+        without going through the HDL interface.
+
+        Args:
+            addr_list: List of addresses to read.
+
+        Returns:
+            List of values corresponding to each address.
+
+        Raises:
+            AssertionError: If any address is out of range.
+        """
+        for addr in addr_list:
+            assert 0 <= addr < self.depth, f"Address {addr} out of range [0, {self.depth})"
+        return [self.content[addr] for addr in addr_list]
+
+    def backdoor_write(self, addr_list: list[int], data_list: list[int]) -> None:
+        """Write multiple addresses in parallel (backdoor operation).
+
+        Direct software-side access to write to multiple buffer locations
+        without going through the HDL interface.
+
+        Args:
+            addr_list: List of addresses to write to.
+            data_list: List of values to write.
+
+        Raises:
+            AssertionError: If address and data lists have different lengths
+                or any address is out of range.
+        """
+        assert len(addr_list) == len(data_list), \
+            f"Address list length {len(addr_list)} != data list length {len(data_list)}"
+        for addr in addr_list:
+            assert 0 <= addr < self.depth, f"Address {addr} out of range [0, {self.depth})"
+        for addr, data in zip(addr_list, data_list):
+            self.content[addr] = data
+
     def clear(self) -> None:
         """Clear all buffer contents to zero."""
         self.content = [0] * self.depth
 
-    def init_from_matrix(self, addr_start: int, addr_end: int, matrix: torch.Tensor) -> None:
-        """Initialize buffer from a 2D matrix.
+    def backdoor_load_matrix(self, addr_start: int, addr_end: int, matrix: torch.Tensor) -> None:
+        """Load buffer from a 2D matrix (backdoor operation).
 
-        Each row of the matrix is converted to a packed integer and written
-        to consecutive addresses.
+        Direct software-side access to load matrix data into the buffer
+        without going through the HDL interface. Each row of the matrix is
+        converted to a packed integer and written to consecutive addresses.
 
         Args:
             addr_start: Starting address (inclusive).
@@ -141,10 +183,15 @@ class Buffer:
                 (1 << self.width) - 1
             )
 
-    def dump_to_matrix(self, addr_start: int, addr_end: int, dtype: torch.dtype) -> torch.Tensor:
-        """Dump buffer contents to a 2D tensor.
+    def init_from_matrix(self, addr_start: int, addr_end: int, matrix: torch.Tensor) -> None:
+        """Alias for backdoor_load_matrix() for backward compatibility."""
+        return self.backdoor_load_matrix(addr_start, addr_end, matrix)
 
-        Reads consecutive addresses and converts each to a tensor row.
+    def backdoor_dump_matrix(self, addr_start: int, addr_end: int, dtype: torch.dtype) -> torch.Tensor:
+        """Dump buffer contents to a 2D tensor (backdoor operation).
+
+        Direct software-side access to read buffer data without going through
+        the HDL interface. Reads consecutive addresses and converts each to a tensor row.
 
         Args:
             addr_start: Starting address (inclusive).
@@ -175,56 +222,101 @@ class Buffer:
             )
         return torch.stack(content_tensor, dim=0)
 
-    def init_from_tensor(self, tensor: torch.Tensor, mapping: TileMapping) -> None:
-        """Initialize buffer from a tensor using TileMapping.
+    def dump_to_matrix(self, addr_start: int, addr_end: int, dtype: torch.dtype) -> torch.Tensor:
+        """Alias for backdoor_dump_matrix() for backward compatibility."""
+        return self.backdoor_dump_matrix(addr_start, addr_end, dtype)
 
-        This is the primary method for loading tensor data into the buffer
-        with complex layouts (tiling, striding, etc.).
+    def backdoor_load_tensor(self, tensor: torch.Tensor, mapping: TileMapping) -> None:
+        """Load buffer from a tensor using TileMapping (backdoor operation).
+
+        Direct software-side access to load tensor data into the buffer
+        with complex layouts (tiling, striding, etc.) without going through
+        the HDL interface.
 
         Args:
             tensor: Input PyTorch tensor of any shape.
             mapping: TileMapping defining the tensor-to-memory transformation.
 
         Note:
-            Uses einops to rearrange tensor according to sw_einops/hw_einops
-            formulas before writing to memory.
+            Uses mapping.to_hw() to convert tensor to hardware format and
+            backdoor_write() for parallel writes.
         """
-        addr_list = mapping.address_mapping.get_addr_list()
-        tensor_seq = einops.rearrange(
-            tensor,
-            mapping.sw_to_hw_formula,
-            **mapping.hw_temp_dim,
-            **mapping.hw_spat_dim,
-        )  # [N, M]
+        # If strides are set, use to_hw() for conversion
+        if hasattr(mapping, 'address_mapping'):
+            # Convert tensor to hardware format (values, addresses)
+            values_list, addr_list = mapping.to_hw(tensor)
+            # Write using parallel backdoor operation
+            self.backdoor_write(addr_list, values_list)
+        else:
+            # No strides: convert using einops and sequential addresses
+            num_temporal = int(np.prod(list(mapping.hw_temp_dim.values())))
+            addr_list = np.arange(mapping.base_addr, mapping.base_addr + num_temporal).tolist()
 
-        for tensor_row, addr in zip(tensor_seq, addr_list):
-            self.write(addr, Vector.from_tensor(tensor_row).to_cocotb())
+            tensor_seq = einops.rearrange(
+                tensor,
+                mapping.sw_to_hw_formula,
+                **mapping.hw_temp_dim,
+                **mapping.hw_spat_dim,
+            )  # [N, M]
 
-    def dump_to_tensor(self, mapping: TileMapping) -> torch.Tensor:
-        """Dump buffer contents to a tensor using TileMapping.
+            values_list = [Vector.from_tensor(tensor_row).to_cocotb() for tensor_row in tensor_seq]
+            self.backdoor_write(addr_list, values_list)
 
-        Reads memory according to the TileMapping and rearranges the data
-        back to the original tensor layout.
+    def init_from_tensor(self, tensor: torch.Tensor, mapping: TileMapping) -> None:
+        """Alias for backdoor_load_tensor() for backward compatibility."""
+        return self.backdoor_load_tensor(tensor, mapping)
+
+    def backdoor_dump_tensor(self, mapping: TileMapping) -> torch.Tensor:
+        """Dump buffer contents to a tensor using TileMapping (backdoor operation).
+
+        Direct software-side access to read buffer data without going through
+        the HDL interface. Reads memory according to the TileMapping and rearranges
+        the data back to the original tensor layout.
 
         Args:
             mapping: TileMapping defining the memory-to-tensor transformation.
 
         Returns:
             A PyTorch tensor with the shape defined by the TileMapping.
+
+        Note:
+            Uses backdoor_read() for parallel reads and mapping.to_sw() to
+            convert hardware format back to tensor.
         """
-        addr_list = mapping.address_mapping.get_addr_list()
-        cocotb_seq = [self.read(addr) for addr in addr_list]
-        tensor_seq = [
-            Vector.from_cocotb(int_value, mapping.num, mapping.dtype).to_tensor()
-            for int_value in cocotb_seq
-        ]
-        tensor = einops.rearrange(
-            tensor_seq,
-            mapping.hw_to_sw_formula,
-            **mapping.hw_temp_dim,
-            **mapping.hw_spat_dim,
-        )  # [N, M]
-        return tensor
+        # Get address list (from address_mapping or generate sequential)
+        if hasattr(mapping, 'address_mapping'):
+            addr_list = mapping.address_mapping.get_addr_list().tolist()
+        else:
+            # No strides: use sequential addresses starting from base_addr
+            num_temporal = int(np.prod(list(mapping.hw_temp_dim.values())))
+            addr_list = np.arange(mapping.base_addr, mapping.base_addr + num_temporal).tolist()
+
+        # Read using parallel backdoor operation
+        values_list = self.backdoor_read(addr_list)
+
+        # If strides are set, use to_sw() for conversion
+        if hasattr(mapping, 'address_mapping'):
+            return mapping.to_sw(values_list, addr_list)
+        else:
+            # No strides: convert using einops
+            tensor_seq = [
+                Vector.from_cocotb(int_value, mapping.num, mapping.dtype).to_tensor()
+                for int_value in values_list
+            ]
+            tensor = einops.rearrange(
+                tensor_seq,
+                mapping.hw_to_sw_formula,
+                **mapping.hw_temp_dim,
+                **mapping.hw_spat_dim,
+            )
+            return tensor
+
+    def dump_to_tensor(self, mapping: TileMapping) -> torch.Tensor:
+        """Alias for backdoor_dump_tensor() for backward compatibility."""
+        return self.backdoor_dump_tensor(mapping)   
+
+
+        
 
 
 def is_trig(value: int, is_pos_trig: bool) -> bool:
@@ -274,6 +366,12 @@ class TwoPortBuffer(Buffer):
         ... )
         >>> await buf.init()
         >>> cocotb.start_soon(buf.run())
+
+    Backdoor operations (direct software access):
+        >>> # Parallel read multiple addresses
+        >>> values = buf.backdoor_read([0, 1, 2, 3])
+        >>> # Parallel write multiple addresses
+        >>> buf.backdoor_write([10, 11, 12], [0x100, 0x200, 0x300])
 
     Signal Interface:
         Write Port:

@@ -6,7 +6,7 @@ Tests the tensor-to-memory mapping functionality without hardware simulation.
 import pytest
 import torch
 import numpy as np
-from torchbit.tools.mapping import TileMapping, AddressMapping, tensor_to_cocotb_seq, cocotb_seq_to_tensor
+from torchbit.tiling import TileMapping, AddressMapping, tensor_to_cocotb_seq, cocotb_seq_to_tensor
 
 
 class TestAddressMapping:
@@ -65,14 +65,14 @@ class TestAddressMapping:
 class TestTileMapping:
     """Tests for TileMapping class."""
 
-    def test_tile_mapping_simple_flatten(self, sample_tensor_chw):
-        """Test simple CHW to linear memory flattening."""
+    def test_tile_mapping_simple_3d(self, sample_tensor_chw):
+        """Test simple CHW to 2D matrix transformation."""
         tensor = sample_tensor_chw  # Shape: (3, 8, 8)
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 8, "w": 8},
             base_addr=0,
@@ -86,41 +86,18 @@ class TestTileMapping:
         # Verify roundtrip
         assert torch.equal(tensor, recovered)
 
-    def test_tile_mapping_channel_last(self, sample_tensor_chw):
-        """Test NCHW to NHWC (channel-last) layout conversion."""
-        tensor = sample_tensor_chw  # Shape: (3, 8, 8)
-
-        mapping = TileMapping(
-            dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (h w c)",
-            hw_temp_dim={"c": 3},
-            hw_spat_dim={"h": 8, "w": 8},
-            base_addr=0,
-            strides=None,
-        )
-
-        # Convert and recover
-        seq = tensor_to_cocotb_seq(tensor, mapping)
-        recovered = cocotb_seq_to_tensor(seq, mapping)
-
-        # Verify roundtrip
-        assert torch.equal(tensor, recovered)
-
-    def test_tile_mapping_tiled_layout(self):
-        """Test 2D tiling pattern."""
-        # Create a tensor: 3 channels, 4x4 spatial
+    def test_tile_mapping_grouped_dimensions(self):
+        """Test with grouped dimensions like (ht hs) (wt ws) ct."""
         torch.manual_seed(42)
-        tensor = torch.randn(3, 4, 4, dtype=torch.float32)
+        # Create tensor: (ht*hs=8, wt*ws=8, ct=3)
+        tensor = torch.randn(8, 8, 3, dtype=torch.float32)
 
-        # For tiling, we use a simpler pattern that matches the API
-        # The temporal dim (c) stays separate, spatial dims (h, w) are combined
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> c (h w)",  # Keep channel separate, combine h and w
-            hw_temp_dim={"c": 3},  # Iterate over channels
-            hw_spat_dim={"h": 4, "w": 4},  # Spatial dimensions are contiguous
+            sw_einops="(ht hs) (wt ws) ct",
+            hw_einops="(ht wt ct) (hs ws)",
+            hw_temp_dim={"ht": 2, "wt": 2, "ct": 3},
+            hw_spat_dim={"hs": 4, "ws": 4},
             base_addr=0,
             strides=None,
         )
@@ -138,8 +115,8 @@ class TestTileMapping:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 8, "w": 8},
             base_addr=0x1000,
@@ -158,56 +135,12 @@ class TestTileMapping:
         assert addrs[1] - addrs[0] == 64
         assert addrs[2] - addrs[1] == 64
 
-    def test_tile_mapping_different_dtypes(self):
-        """Test TileMapping with float32 data type."""
-        tensor = torch.randn(2, 4, 4, dtype=torch.float32)
-
-        mapping = TileMapping(
-            dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
-            hw_temp_dim={"c": 2},
-            hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0,
-            strides=None,
-        )
-
-        seq = tensor_to_cocotb_seq(tensor, mapping)
-        recovered = cocotb_seq_to_tensor(seq, mapping)
-
-        assert torch.equal(tensor, recovered)
-
-    def test_tensor_cocotb_seq_roundtrip(self, sample_tensor_chw):
-        """Test tensor_to_cocotb_seq and cocotb_seq_to_tensor roundtrip."""
-        tensor = sample_tensor_chw
-
-        mapping = TileMapping(
-            dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (h w c)",
-            hw_temp_dim={"c": 3},
-            hw_spat_dim={"h": 8, "w": 8},
-            base_addr=0,
-            strides=None,
-        )
-
-        # Forward conversion
-        seq = tensor_to_cocotb_seq(tensor, mapping)
-        assert len(seq) == 3  # One per channel
-        assert all(isinstance(x, int) for x in seq)
-
-        # Reverse conversion
-        recovered = cocotb_seq_to_tensor(seq, mapping)
-
-        # Verify
-        assert torch.equal(tensor, recovered)
-
     def test_tile_mapping_num_attribute(self):
         """Test that num attribute is calculated correctly."""
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (h w c)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 8, "w": 8},
             base_addr=0,
@@ -222,16 +155,66 @@ class TestTileMapping:
         """Test that sw_to_hw and hw_to_sw formulas are generated correctly."""
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (h w c)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 8, "w": 8},
             base_addr=0,
             strides=None,
         )
 
-        # sw_to_hw: input is 'c h w', output is temporal dims + combined spatial dims
-        # Temporal: c, Spatial: h w combined -> 'c (h w)'
         assert mapping.sw_to_hw_formula == "c h w -> c (h w)"
-        # hw_to_sw: reverse from 'c (h w)' back to 'c h w'
         assert mapping.hw_to_sw_formula == "c (h w) -> c h w"
+
+    def test_tile_mapping_to_hw_to_sw(self, sample_tensor_chw):
+        """Test to_hw and to_sw methods."""
+        tensor = sample_tensor_chw  # Shape: (3, 8, 8)
+
+        mapping = TileMapping(
+            dtype=torch.float32,
+            sw_einops="c h w",
+            hw_einops="c (h w)",
+            hw_temp_dim={"c": 3},
+            hw_spat_dim={"h": 8, "w": 8},
+            base_addr=0x1000,
+            strides={"c": 64},
+        )
+
+        # to_hw: convert tensor to values and addresses
+        values, addrs = mapping.to_hw(tensor)
+        assert len(values) == 3
+        assert len(addrs) == 3
+        assert addrs == [0x1000, 0x1000 + 64, 0x1000 + 128]
+
+        # to_sw: convert back
+        tensor_restored = mapping.to_sw(values, addrs)
+        assert torch.equal(tensor, tensor_restored)
+
+    def test_tile_mapping_invalid_hw_format(self):
+        """Test that invalid hw_einops format is rejected."""
+        with pytest.raises(AssertionError, match="2D format"):
+            TileMapping(
+                dtype=torch.float32,
+                sw_einops="c h w",
+                hw_einops="(c h w)",  # Invalid: only 1 group!
+                hw_temp_dim={"c": 3},
+                hw_spat_dim={"h": 8, "w": 8},
+                base_addr=0,
+                strides=None,
+            )
+
+    def test_tile_mapping_to_hw_requires_strides(self):
+        """Test that to_hw requires strides to be set."""
+        mapping = TileMapping(
+            dtype=torch.float32,
+            sw_einops="c h w",
+            hw_einops="c (h w)",
+            hw_temp_dim={"c": 3},
+            hw_spat_dim={"h": 8, "w": 8},
+            base_addr=0,
+            strides=None,  # No strides!
+        )
+
+        tensor = torch.randn(3, 8, 8)
+        with pytest.raises(AssertionError, match="strides"):
+            mapping.to_hw(tensor)

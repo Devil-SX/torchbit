@@ -8,7 +8,7 @@ import pytest
 import torch
 import torchbit
 from torchbit.tools.buffer import TwoPortBuffer
-from torchbit.tools.mapping import TileMapping
+from torchbit.tiling import TileMapping
 
 
 class TestBufferTilingBasic:
@@ -61,8 +61,8 @@ class TestBufferInitFromTensor:
         # Create mapping
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
             base_addr=0,
@@ -87,8 +87,8 @@ class TestBufferInitFromTensor:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
             base_addr=0x100,
@@ -110,8 +110,8 @@ class TestBufferInitFromTensor:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
             base_addr=0,
@@ -139,8 +139,8 @@ class TestBufferDumpToTensor:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
             base_addr=0,
@@ -164,8 +164,8 @@ class TestBufferDumpToTensor:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
             base_addr=0x100,
@@ -190,8 +190,8 @@ class TestBufferRoundtrip:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 8, "w": 8},
             base_addr=0,
@@ -213,8 +213,8 @@ class TestBufferRoundtrip:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (h w c)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 8, "w": 8},
             base_addr=0,
@@ -236,8 +236,8 @@ class TestBufferRoundtrip:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> c (h w)",  # Keep channel separate, combine h and w
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # Keep channel separate, combine h and w
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
             base_addr=0,
@@ -259,8 +259,8 @@ class TestBufferRoundtrip:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 4},
             hw_spat_dim={"h": 4, "w": 4},
             base_addr=0,  # Use base_addr=0 to stay within buffer bounds
@@ -286,8 +286,8 @@ class TestBufferMultipleDtypes:
 
         mapping = TileMapping(
             dtype=torch.float32,
-            sw_einops="c h w -> c h w",
-            hw_einops="c h w -> (c h w)",
+            sw_einops="c h w",
+            hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 2},
             hw_spat_dim={"h": 4, "w": 4},
             base_addr=0,
@@ -340,3 +340,114 @@ class TestBufferMatrixOperations:
         # Verify other locations are zero
         for i in range(100):
             assert buf.read(i) == 0
+
+
+class TestBufferBackdoorParallel:
+    """Tests for parallel backdoor operations."""
+
+    def test_backdoor_read_single(self, buffer_32x1024):
+        """Test backdoor_read with single address."""
+        buf = buffer_32x1024
+
+        # Write a value
+        buf.write(100, 0xDEADBEEF)
+
+        # Read using backdoor
+        values = buf.backdoor_read([100])
+        assert values == [0xDEADBEEF]
+
+    def test_backdoor_read_multiple(self, buffer_32x1024):
+        """Test backdoor_read with multiple addresses."""
+        buf = buffer_32x1024
+
+        # Write values
+        buf.write(0, 0x11111111)
+        buf.write(10, 0x22222222)
+        buf.write(100, 0x33333333)
+
+        # Read using backdoor
+        values = buf.backdoor_read([0, 10, 100])
+        assert values == [0x11111111, 0x22222222, 0x33333333]
+
+    def test_backdoor_read_out_of_range(self, buffer_32x1024):
+        """Test backdoor_read with out of range address."""
+        buf = buffer_32x1024
+
+        with pytest.raises(AssertionError, match="out of range"):
+            buf.backdoor_read([0, 10, 1024])  # 1024 is out of range
+
+    def test_backdoor_write_single(self, buffer_32x1024):
+        """Test backdoor_write with single address."""
+        buf = buffer_32x1024
+
+        # Write using backdoor
+        buf.backdoor_write([100], [0xBEEFBEEF])
+
+        # Read back
+        assert buf.read(100) == 0xBEEFBEEF
+
+    def test_backdoor_write_multiple(self, buffer_32x1024):
+        """Test backdoor_write with multiple addresses."""
+        buf = buffer_32x1024
+
+        # Write using backdoor
+        buf.backdoor_write([0, 10, 100], [0xAAA, 0xBBB, 0xCCC])
+
+        # Read back
+        assert buf.read(0) == 0xAAA
+        assert buf.read(10) == 0xBBB
+        assert buf.read(100) == 0xCCC
+
+    def test_backdoor_write_mismatched_lengths(self, buffer_32x1024):
+        """Test backdoor_write with mismatched address and data lists."""
+        buf = buffer_32x1024
+
+        with pytest.raises(AssertionError, match="length"):
+            buf.backdoor_write([0, 10], [0xAAA])  # 2 addresses, 1 value
+
+    def test_backdoor_write_out_of_range(self, buffer_32x1024):
+        """Test backdoor_write with out of range address."""
+        buf = buffer_32x1024
+
+        with pytest.raises(AssertionError, match="out of range"):
+            buf.backdoor_write([0, 10, 1024], [0xAAA, 0xBBB, 0xCCC])
+
+    def test_backdoor_new_api_with_aliases(self, buffer_128x512):
+        """Test new backdoor_* methods work as expected."""
+        buf = buffer_128x512
+
+        torch.manual_seed(42)
+        tensor = torch.randn(3, 4, 4, dtype=torch.float32)
+
+        mapping = TileMapping(
+            dtype=torch.float32,
+            sw_einops="c h w",
+            hw_einops="c (h w)",
+            hw_temp_dim={"c": 3},
+            hw_spat_dim={"h": 4, "w": 4},
+            base_addr=0,
+            strides=None,
+        )
+
+        # Use new backdoor_load_tensor
+        buf.backdoor_load_tensor(tensor, mapping)
+
+        # Use new backdoor_dump_tensor
+        recovered = buf.backdoor_dump_tensor(mapping)
+
+        assert torch.equal(tensor, recovered)
+
+    def test_backdoor_matrix_new_api(self, buffer_128x512):
+        """Test new backdoor_load_matrix and backdoor_dump_matrix methods."""
+        buf = buffer_128x512
+
+        torch.manual_seed(42)
+        matrix = torch.randn(16, 4, dtype=torch.float32)
+
+        # Use new backdoor_load_matrix
+        buf.backdoor_load_matrix(0, 16, matrix)
+
+        # Use new backdoor_dump_matrix
+        recovered = buf.backdoor_dump_matrix(0, 16, torch.float32)
+
+        assert torch.equal(matrix, recovered)

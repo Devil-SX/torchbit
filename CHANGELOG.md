@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-01-30
+
+### Added
+- **Tiling:** Added `TileMapping` class for tensor-to-memory mapping with spatial/temporal dimension support.
+- **Tiling:** Added `AddressMapping` class for multi-dimensional to flat memory address translation.
+- **Tiling:** Added `pad_utils` module with einops-style padding functions: `pad()`, `depad()`, `depad_like()`, `get_padlen()`.
+- **Tools:** Added `backdoor_read()` and `backdoor_write()` to `Buffer` class for parallel bulk operations.
+- **Tools:** Added UVM-style backdoor operations to `Buffer` class: `backdoor_load_tensor()`, `backdoor_dump_tensor()`, `backdoor_load_matrix()`, `backdoor_dump_matrix()`.
+- **Documentation:** Added bilingual documentation structure with `doc/en/` (English) and `doc/zh-CN/` (Chinese) directories.
+- **Documentation:** Added `doc/en/tilling_schedule.md` with tiling operation specifications.
+- **Examples:** Added `06_tile_mapping` example demonstrating TileMapping with spatial/temporal dimensions.
+- **Commands:** Added unified `commit` command combining changelog update and git operations.
+
+### Changed
+- **Tiling:** Refactored `TileMapping` API - removed `->` from einops patterns, now uses `sw_einops` and `hw_einops` as separate properties.
+- **Tiling:** `TileMapping.hw_einops` must be 2D format `(temporal) (spatial)` for hardware matrix layout.
+- **Tiling:** Renamed `shape_process.py` to `pad_utils.py` with einops-style interface.
+- **Tools:** Refactored `backdoor_load_tensor()` and `backdoor_dump_tensor()` to use `mapping.to_hw()`/`to_sw()` and `backdoor_read()`/`backdoor_write()`.
+- **Tools:** `Buffer.init_from_tensor()` now uses `TileMapping.sw_to_hw_formula` for tensor-to-memory conversion.
+- **Documentation:** Separated Chinese and English documentation into distinct directories.
+- **Documentation:** Updated README.md to English-only, added README.zh-CN.md for Chinese.
+
+### Removed
+- **Tools:** Removed `backdoor_read_write()` from `Buffer` class (functionality split into separate read/write).
+- **Commands:** Removed `update_changelog` and `update_git` commands (merged into `commit` command).
+- **Tools:** Removed deprecated `torchbit/tools/mapping.py` (functionality moved to `torchbit/tiling/mapping.py`).
+- **Tools:** Removed deprecated `torchbit/tools/shape_process.py` (replaced by `torchbit/tiling/pad_utils.py`).
+- **Documentation:** Removed `doc/tensor.md` and `doc/value.md` (content reorganized).
+
 ## [Unreleased]
 
 ### Added

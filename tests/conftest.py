@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import torchbit
 from torchbit.tools.buffer import TwoPortBuffer
-from torchbit.tools.mapping import TileMapping, AddressMapping
+from torchbit.tiling import TileMapping, AddressMapping
 
 
 def pytest_configure(config):
