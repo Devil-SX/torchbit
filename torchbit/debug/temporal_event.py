@@ -2,7 +2,7 @@
 Temporal event visualization utilities.
 
 Provides functions for drawing and analyzing temporal event sequences,
-useful for visualizing the timing relationship between sender/collector
+useful for visualizing the timing relationship between driver/monitor
 events in verification tests.
 """
 import matplotlib.pyplot as plt
@@ -45,7 +45,7 @@ def load_from_json(json_path: str | Path) -> Dict[str, Any]:
     Example:
         >>> data = load_from_json("events.json")
         >>> data["names"]
-        ['Sender', 'Collector']
+        ['Driver', 'Monitor']
         >>> data["seqs"]
         [[0, 100, 200], [150, 250, 350]]
     """
@@ -110,7 +110,7 @@ def draw_temporal_event_seqs(path: str, names: List[str], seqs: List[List[float 
         >>> # Draw from Python data
         >>> draw_temporal_event_seqs(
         ...     path="events.png",
-        ...     names=["Sender", "Collector"],
+        ...     names=["Driver", "Monitor"],
         ...     seqs=[[0, 100, 200], [50, 150, 250]],
         ...     unit="ns",
         ...     title="Data Transfer Timing"

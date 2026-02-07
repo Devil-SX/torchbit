@@ -9,7 +9,7 @@ Utilities for deep learning accelerator development with Cocotb verification.
 - **Core**: Tensor/vector conversion between PyTorch and HDL formats
 - **Tiling**: Tensor-to-memory mapping with spatial/temporal dimensions
 - **Runner**: Simulator management (Verilator, VCS)
-- **Tools**: Verification components (Buffer, Sender/Collector)
+- **Tools**: Verification components (Buffer, Driver/Monitor)
 - **Debug**: Waveform analysis tools
 
 ```{toctree}

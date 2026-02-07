@@ -1,148 +1,24 @@
 """
-Data driver and collector utilities for Cocotb testbenches.
+Data monitor utilities for Cocotb testbenches.
 
-Provides Sender, PoolCollector, and FIFOCollector classes for driving
-stimulus into and collecting responses from HDL interfaces.
+Provides PoolMonitor and FIFOMonitor classes for collecting
+responses from HDL interfaces.
 """
 import cocotb
-from cocotb.triggers import RisingEdge, Event, Timer
+from cocotb.triggers import RisingEdge, Event
 from cocotb.utils import get_sim_time
 from cocotb.handle import Immediate
 from .port import InputPort, OutputPort
-from typing import List, Optional, Any
+from typing import List
 
 
-class Sender:
-    """Data driver for sending stimuli to HDL interfaces.
-
-    A Cocotb-aware driver that sequences data values and drives them
-    onto HDL signals. Supports flow control via full/ready signals.
-
-    The Sender:
-    - Maintains a queue of values to send
-    - Drives data and valid signals on each clock cycle
-    - Optionally waits for backpressure (full/ready) signals
-    - Records timestamps for each sent value
-
-    Attributes:
-        debug (bool): Enable debug logging.
-        queue (list): Data values pending to be sent.
-        timestamps (list): Simulation timestamps when data was sent.
-        data_port (OutputPort): Connected data signal.
-        valid_port (OutputPort): Connected valid signal.
-        full_port (InputPort or None): Connected full/backpressure signal.
-
-    Example:
-        >>> from torchbit.tools import Sender
-        >>> sender = Sender(debug=True)
-        >>> sender.connect(dut=dut, clk=dut.clk, data=dut.data, valid=dut.valid)
-        >>> sender.load([0x1, 0x2, 0x3, 0x4])
-        >>> cocotb.start_soon(sender.run())
-
-    With flow control:
-        >>> sender = Sender()
-        >>> sender.connect(dut=dut, clk=dut.clk, data=dut.data,
-        ...                valid=dut.valid, full=dut.fifo_full)
-        >>> sender.load([0x1, 0x2, 0x3, 0x4])
-        >>> cocotb.start_soon(sender.run())
-        >>>
-        >>> # Later, stop the sender
-        >>> stop_event = Event()
-        >>> stop_event.set()
-    """
-
-    def __init__(self, debug: bool = False):
-        """Initialize a Sender.
-
-        Args:
-            debug: If True, enable debug logging for each sent value.
-        """
-        self.debug = debug
-        self.queue: List[int] = []
-        self.timestamps: List[tuple] = []
-
-    def connect(self, dut, clk, data, valid, full=None) -> None:
-        """Connect the Sender to HDL signals.
-
-        Args:
-            dut: The DUT object.
-            clk: Clock signal.
-            data: Data output signal.
-            valid: Valid output signal.
-            full: (optional) Backpressure signal. Interpretation depends on
-                  protocol: for FIFO, 1 means stop; for ready/valid, 0 means stop.
-        """
-        self.dut = dut
-        self.clk = clk
-        self.data_port = OutputPort(data)
-        self.valid_port = OutputPort(valid)
-        self.full_port = InputPort(full) if full is not None else None
-
-    def load(self, sequence: List[int]) -> None:
-        """Load a sequence of values to send.
-
-        Args:
-            sequence: List of integer values to send in order.
-        """
-        self.queue = list(sequence)
-        self.timestamps = []
-
-    def dump_time(self) -> List[tuple]:
-        """Get timestamps for each sent value.
-
-        Returns:
-            List of (time_value, time_unit) tuples for each sent value.
-        """
-        return self.timestamps
-
-    async def run(self, stop_event: Event = None) -> None:
-        """Start sending data.
-
-        Runs as a coroutine, sending values from the queue on each
-        clock cycle until all values are sent or stop_event is set.
-
-        Args:
-            stop_event: Optional Event to signal early termination.
-        """
-        idx = 0
-        while idx < len(self.queue):
-            if stop_event is not None and isinstance(stop_event, Event):
-                if stop_event.is_set():
-                    break
-
-            # Drive signals
-            self.data_port.set(self.queue[idx])
-            self.valid_port.set(1)  # Always Ready logic
-
-            # Wait for clock edge
-            await RisingEdge(self.clk)
-
-            # Check flow control to decide if we advance
-            can_send = True
-            if self.full_port is not None:
-                r_val = self.full_port.get()
-                # If full signal: 1 means Stop
-                # If normal READY: 0 means Stop
-                can_send = (r_val == 0)
-
-            if can_send:
-                t = get_sim_time()
-                self.timestamps.append(t)
-                if self.debug:
-                    self.dut._log.info(f"[Sender] Sent {self.queue[idx]} at {t}")
-                idx += 1
-
-        # Done, deassert valid
-        self.valid_port.set(0)
-
-
-class PoolCollector:
+class PoolMonitor:
     """Collects data from HDL interfaces without flow control.
 
-    A simple collector that captures data when valid is asserted.
+    A simple monitor that captures data when valid is asserted.
     Assumes always-ready reception of data (no backpressure).
 
-    The PoolCollector:
+    The PoolMonitor:
     - Monitors data and valid signals
     - Captures data on each valid cycle
     - Records timestamps for each captured value
@@ -154,22 +30,22 @@ class PoolCollector:
         timestamps (list): Simulation timestamps when data was captured.
 
     Example:
-        >>> from torchbit.tools import PoolCollector
-        >>> collector = PoolCollector(debug=True)
-        >>> collector.connect(dut=dut, clk=dut.clk, data=dut.data, valid=dut.valid)
+        >>> from torchbit.tools import PoolMonitor
+        >>> monitor = PoolMonitor(debug=True)
+        >>> monitor.connect(dut=dut, clk=dut.clk, data=dut.data, valid=dut.valid)
         >>> stop_event = Event()
-        >>> cocotb.start_soon(collector.run(stop_event))
+        >>> cocotb.start_soon(monitor.run(stop_event))
         >>>
         >>> # Run simulation...
         >>>
         >>> # Stop collection
         >>> stop_event.set()
-        >>> results = collector.dump()
-        >>> times = collector.dump_time()
+        >>> results = monitor.dump()
+        >>> times = monitor.dump_time()
     """
 
     def __init__(self, debug: bool = False):
-        """Initialize a PoolCollector.
+        """Initialize a PoolMonitor.
 
         Args:
             debug: If True, enable debug logging for each captured value.
@@ -179,7 +55,7 @@ class PoolCollector:
         self.timestamps: List[tuple] = []
 
     def connect(self, dut, clk, data, valid) -> None:
-        """Connect the PoolCollector to HDL signals.
+        """Connect the PoolMonitor to HDL signals.
 
         Args:
             dut: The DUT object.
@@ -201,7 +77,7 @@ class PoolCollector:
         Args:
             stop_event: Event that signals when to stop collection.
         """
-        # Collector now implicitly assumes it's always ready to receive,
+        # Monitor now implicitly assumes it's always ready to receive,
         # as 'ready' output was removed.
 
         while not stop_event.is_set():
@@ -218,7 +94,7 @@ class PoolCollector:
                 self.data.append(val)
                 self.timestamps.append(t)
                 if self.debug:
-                    self.dut._log.info(f"[Collector] Collected {val} at {t}")
+                    self.dut._log.info(f"[Monitor] Collected {val} at {t}")
 
     def dump(self) -> List[int]:
         """Get all collected data values.
@@ -237,13 +113,13 @@ class PoolCollector:
         return self.timestamps
 
 
-class FIFOCollector:
+class FIFOMonitor:
     """Collects data with FIFO-style ready/empty flow control.
 
     Drives the ready signal based on FIFO empty status and captures
     data when both valid and ready are asserted.
 
-    The FIFOCollector:
+    The FIFOMonitor:
     - Monitors empty signal to determine if FIFO has data
     - Asserts ready when FIFO is not empty
     - Captures data on valid+ready handshake
@@ -255,28 +131,28 @@ class FIFOCollector:
         timestamps (list): Simulation timestamps.
 
     Example:
-        >>> from torchbit.tools import FIFOCollector
-        >>> collector = FIFOCollector(debug=True)
-        >>> collector.connect(dut=dut, clk=dut.clk,
+        >>> from torchbit.tools import FIFOMonitor
+        >>> monitor = FIFOMonitor(debug=True)
+        >>> monitor.connect(dut=dut, clk=dut.clk,
         ...                   data=dut.data, empty=dut.fifo_empty,
         ...                   ready=dut.fifo_ready)
         >>> stop_event = Event()
-        >>> cocotb.start_soon(collector.run(stop_event))
+        >>> cocotb.start_soon(monitor.run(stop_event))
     """
 
     def __init__(self, debug: bool = False):
-        """Initialize a FIFOCollector.
+        """Initialize a FIFOMonitor.
 
         Args:
             debug: If True, enable debug logging.
         """
         self.debug = debug
-        print(f"[FIFOCollector] Initialized {debug=}")
+        print(f"[FIFOMonitor] Initialized {debug=}")
         self.data: List[int] = []
         self.timestamps: List[tuple] = []
 
     def connect(self, dut, clk, data, empty, ready, valid=None) -> None:
-        """Connect the FIFOCollector to HDL signals.
+        """Connect the FIFOMonitor to HDL signals.
 
         Args:
             dut: The DUT object.
@@ -304,7 +180,7 @@ class FIFOCollector:
         Args:
             stop_event: Event that signals when to stop collection.
         """
-        # Collector now implicitly assumes it's always ready to receive,
+        # Monitor now implicitly assumes it's always ready to receive,
         # as 'ready' output was removed.
         self.ready_port.set(Immediate(0))
 
@@ -330,7 +206,7 @@ class FIFOCollector:
                 # Valid set after next ready
                 v_val = last_ready
             if self.debug:
-                self.dut._log.info(f"[Collector] Valid {v_val} at {t}")
+                self.dut._log.info(f"[Monitor] Valid {v_val} at {t}")
 
             is_valid = (v_val == 1)  # Hardcoded to check for active-high valid
 
@@ -339,7 +215,7 @@ class FIFOCollector:
                 self.data.append(val)
                 self.timestamps.append(t)
                 if self.debug:
-                    self.dut._log.info(f"[Collector] Collected {val} at {t}")
+                    self.dut._log.info(f"[Monitor] Collected {val} at {t}")
 
             last_ready = cur_ready
 

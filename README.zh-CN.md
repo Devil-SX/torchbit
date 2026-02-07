@@ -24,9 +24,7 @@ Torchbit 为深度学习加速器验证提供实用工具，便于将 PyTorch �
 ## 安装
 
 ```bash
-git clone https://github.com/Devil-SX/torchbit.git
-cd torchbit
-pip install -e .
+pip install git+https://github.com/Devil-SX/torchbit.git
 ```
 
 主分支目前为使用 `cocotb >= 2.x`、Verilator >= 5.036 和 VCS 的环境维护。

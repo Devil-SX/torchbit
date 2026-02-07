@@ -1,7 +1,7 @@
 """
-Sender/Collector Example - Entry Point
+Driver/Monitor Example - Entry Point
 
-This script demonstrates the Sender and PoolCollector classes
+This script demonstrates the Driver and PoolMonitor classes
 for driving and capturing data from a hardware DUT.
 """
 import sys
@@ -14,19 +14,19 @@ from torchbit.runner import Runner, FileConfig, BuildConfig, DEFAULT_VERILATOR_B
 
 
 def main():
-    """Run the Sender/Collector example."""
+    """Run the Driver/Monitor example."""
     print("=" * 60)
-    print("TorchBit Sender/Collector Example")
+    print("TorchBit Driver/Monitor Example")
     print("=" * 60)
     print()
     print("This example demonstrates:")
-    print("  - Sender class for driving stimulus to DUT")
-    print("  - PoolCollector class for capturing DUT output")
+    print("  - Driver class for driving stimulus to DUT")
+    print("  - PoolMonitor class for capturing DUT output")
     print("  - Flow control and timing visualization")
     print("  - Data verification and temporal event graphing")
     print()
     print("DUT: pipe.sv - Parameterized pipeline with delay")
-    print("Test: test_pipe.py - Sender/Collector demonstration")
+    print("Test: test_pipe.py - Driver/Monitor demonstration")
     print()
     print("Expected outputs:")
     print("  - Build directory: sim_pipe_default_verilator_test_pipe/")

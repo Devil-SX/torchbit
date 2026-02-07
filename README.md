@@ -24,9 +24,7 @@ Torchbit provides utilities for deep learning accelerator verification, facilita
 ## Installation
 
 ```bash
-git clone https://github.com/Devil-SX/torchbit.git
-cd torchbit
-pip install -e .
+pip install git+https://github.com/Devil-SX/torchbit.git
 ```
 
 The main branch is currently maintained for environments using `cocotb >= 2.x`, Verilator >= 5.036, and VCS.

@@ -9,7 +9,7 @@
 - **Core** (核心): PyTorch 与 HDL 格式之间的张量/向量转换
 - **Tiling** (分片): 张量到内存映射，支持空���/时间维度
 - **Runner** (运行器): 仿真器管理 (Verilator, VCS)
-- **Tools** (工具): 验证组件 (Buffer, Sender/Collector)
+- **Tools** (工具): 验证组件 (Buffer, Driver/Monitor)
 - **Debug** (调试): 波形分析工具
 
 ```{toctree}

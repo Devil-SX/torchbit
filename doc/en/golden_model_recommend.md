@@ -61,7 +61,7 @@ torchbit's `TileMapping` abstraction supports mapping between [Software-style Te
 
 ### Data Loading Paths
 
-- **Path 1**: Software Tensor &rarr; TileMapping &rarr; Hardware Matrix &rarr; Backdoor Write &rarr; Sender (FIFO/Buffer) &rarr; Front-door Interaction &rarr; Hardware Unit
+- **Path 1**: Software Tensor &rarr; TileMapping &rarr; Hardware Matrix &rarr; Backdoor Write &rarr; Driver (FIFO/Buffer) &rarr; Front-door Interaction &rarr; Hardware Unit
 - **Path 2**: Software Tensor &rarr; Shape Dimension Parsing &rarr; Instruction Generation &rarr; Hardware Unit
 
 ### Data Saving Path

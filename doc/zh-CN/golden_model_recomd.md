@@ -61,7 +61,7 @@ torchbit 的 `TileMapping` 抽象支持在 [Software-style Tensor](./tilling_sch
 
 ### 数据加载路径
 
-- **路径1**：软件 Tensor &rarr; TileMapping &rarr; Hardware Matrix &rarr; 后门写入 &rarr; Sender (FIFO/Buffer) &rarr; 前门交互 &rarr; Hardware Unit
+- **路径1**：软件 Tensor &rarr; TileMapping &rarr; Hardware Matrix &rarr; 后门写入 &rarr; Driver (FIFO/Buffer) &rarr; 前门交互 &rarr; Hardware Unit
 - **路径2**：软件 Tensor &rarr; shape 维度解析 &rarr; 指令信息生成 &rarr; Hardware Unit
 
 ### 数据保存路径

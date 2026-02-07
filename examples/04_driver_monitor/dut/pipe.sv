@@ -1,7 +1,7 @@
-// Pipeline DUT for Sender/Collector Example
+// Pipeline DUT for Driver/Monitor Example
 //
 // This module implements a simple parameterized pipeline with configurable
-// width and delay. Used to demonstrate the Sender and Collector classes.
+// width and delay. Used to demonstrate the Driver and Monitor classes.
 
 module Pipe #(
     parameter WIDTH = 32,

@@ -36,11 +36,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-02-07
+
 ### Added
 - **Documentation:** Added English translation of `golden_model_recommend.md` with AI accelerator Golden Model best practices.
 - **Commands:** Enhanced `commit` command to create git tags for version releases (e.g., `v2.1.0`).
 
 ### Changed
+- **Tools:** Renamed `Sender` to `Driver` (UVM-aligned naming for stimulus driver).
+- **Tools:** Renamed `PoolCollector` to `PoolMonitor` (UVM-aligned naming for passive output monitor).
+- **Tools:** Renamed `FIFOCollector` to `FIFOMonitor` (UVM-aligned naming for FIFO handshake monitor).
+- **Tools:** Split `sender_collector.py` into separate `driver.py` and `monitor.py` modules.
 - **Documentation:** Polished `golden_model_recomd.md` with better structure, fixed markdown links, and improved language flow.
 - **Tests:** Added `test_buffer_backdoor_performance.py` with performance benchmarks for Buffer backdoor operations.
 - **Tests:** Added profiling tests using cProfile to identify bottlenecks in backdoor operations.
@@ -50,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `01_basic_runner` - Basic Runner setup with simple counter DUT
   - `02_data_convert` - Vector/Matrix conversion demonstrations (no DUT)
   - `03_bit_struct` - BitStruct usage examples
-  - `04_sender_collector` - Sender/Collector pattern with pipeline DUT
+  - `04_driver_monitor` - Driver/Monitor pattern with pipeline DUT
   - `05_buffer` - TwoPortBuffer usage with memory mover DUT
 - **Examples:** Added `05_buffer` example demonstrating TwoPortBuffer as shared memory with:
   - Memory mover DUT that copies data between memory regions
@@ -61,18 +67,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `test_vector.py` - Vector class tests (38 tests)
   - `test_matrix.py` - Matrix class tests (57 tests)
   - `test_ports.py` - InputPort/OutputPort tests (24 tests)
-  - `test_sender_collector.py` - Sender/Collector tests (27 tests)
+  - `test_driver_monitor.py` - Driver/Monitor tests (27 tests)
   - `test_runner.py` - Runner and configuration tests (18 tests)
 - **Debug:** Added new `waveform_tool.py` module with waveform analysis functions: `posedge_dump_to_csv()`, `list_signals()`, `check_signals()`, and `count_edges()`.
 - **Debug:** Added `convert_fsdb_to_fst()` function to `file_converter.py` for FSDB to FST format conversion.
 - **Debug:** Added support for flexible output in waveform tools - functions can output to stdout or file.
 
 ### Removed
+- **Tools:** Removed `sender_collector.py` (split into `driver.py` and `monitor.py`).
 - **Examples:** Removed old flat example structure:
   - `test_bit_ops.py`, `test_bit_struct.py`, `test_bit_struct_comparator.py`
   - `test_matrix.py`, `test_matrix_with_verilog.py`
   - `test_temporal_event.py`, `test_vector.py`, `test_wavetool.py`
-  - `test_sender_collector/` directory (moved to `04_sender_collector/`)
+  - `test_sender_collector/` directory (moved to `04_driver_monitor/`)
 - **Debug:** Removed `main.py` from wave_converter module. Functions moved to `file_converter.py` and `waveform_tool.py`.
 
 ### Changed

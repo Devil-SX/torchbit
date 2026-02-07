@@ -11,11 +11,20 @@ Memory buffer simulation for SRAM/register file modeling.
    :undoc-members:
    :show-inheritance:
 
-## torchbit.tools.sender_collector
+## torchbit.tools.driver
 
-Sender and Collector patterns for FIFO/Pipeline interfaces.
+Driver pattern for driving stimulus into FIFO/Pipeline interfaces.
 
-.. automodule:: torchbit.tools.sender_collector
+.. automodule:: torchbit.tools.driver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+## torchbit.tools.monitor
+
+Monitor patterns for collecting data from FIFO/Pipeline interfaces.
+
+.. automodule:: torchbit.tools.monitor
    :members:
    :undoc-members:
    :show-inheritance:

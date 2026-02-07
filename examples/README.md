@@ -15,7 +15,7 @@ This directory contains examples demonstrating key TorchBit functionality for ha
 | [01_basic_runner](./01_basic_runner/) | Minimal Runner setup | `simple_counter.v` | Runner, FileConfig, BuildConfig |
 | [02_data_convert](./02_data_convert/) | Vector/Matrix conversion | None | Vector, Matrix |
 | [03_bit_struct](./03_bit_struct/) | BitField/BitStruct usage | None | BitStruct, BitField |
-| [04_sender_collector](./04_sender_collector/) | Sender/Collector pattern | `pipe.sv` | Sender, PoolCollector |
+| [04_driver_monitor](./04_driver_monitor/) | Driver/Monitor pattern | `pipe.sv` | Driver, PoolMonitor |
 | [05_buffer](./05_buffer/) | TwoPortBuffer with memory | `memory_mover.v` + `twopr_ram.v` | TwoPortBuffer, TileMapping |
 
 ## Running an Example
@@ -47,10 +47,10 @@ Demonstrates bit-level data manipulation.
 - **BitStruct**: Packed data structures
 - Useful for: CPU registers, instruction formats, protocol headers
 
-### 4. Sender/Collector
+### 4. Driver/Monitor
 Shows stimulus generation and response capture.
-- **Sender**: Drives data to DUT inputs
-- **PoolCollector**: Captures data from DUT outputs
+- **Driver**: Drives data to DUT inputs
+- **PoolMonitor**: Captures data from DUT outputs
 - Generates timing visualization graphs
 
 ### 5. Buffer
@@ -70,7 +70,7 @@ examples/
 ├── 01_basic_runner/
 ├── 02_data_convert/
 ├── 03_bit_struct/
-├── 04_sender_collector/
+├── 04_driver_monitor/
 └── 05_buffer/
 ```
 
@@ -97,5 +97,5 @@ build_config = DEFAULT_VCS_BUILD_CONFIG
 After running these examples, explore:
 - `tests/` - Formal pytest test suite
 - `torchbit/core/` - Vector and Matrix implementation
-- `torchbit/tools/` - Sender, Collector, Buffer classes
+- `torchbit/tools/` - Driver, Monitor, Buffer classes
 - `torchbit/runner/` - Runner configuration

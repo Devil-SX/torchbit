@@ -1,13 +1,13 @@
 """
-Sender/Collector Example with Pipeline DUT
+Driver/Monitor Example with Pipeline DUT
 
-Demonstrates the Sender and PoolCollector classes for driving
+Demonstrates the Driver and PoolMonitor classes for driving
 and capturing data from a hardware pipeline.
 """
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Event
-from torchbit.tools import Sender, PoolCollector
+from torchbit.tools import Driver, PoolMonitor
 from torchbit.runner import Runner, FileConfig, BuildConfig, DEFAULT_VERILATOR_BUILD_CONFIG
 import random
 from pathlib import Path
@@ -20,18 +20,18 @@ def random_seq_gen(length=10, min_val=0, max_val=100):
 
 
 class PipeWrapper:
-    """Wrapper class connecting Sender and Collector to the Pipe DUT."""
+    """Wrapper class connecting Driver and Monitor to the Pipe DUT."""
 
     def __init__(self, dut, debug=False):
         self.dut = dut
-        self.sender = Sender(debug=debug)
-        self.collector = PoolCollector(debug=debug)
+        self.driver = Driver(debug=debug)
+        self.monitor = PoolMonitor(debug=debug)
 
     def connect(self):
-        """Connect Sender to DUT input and Collector to DUT output."""
-        # Sender connects to Input of Pipe
+        """Connect Driver to DUT input and Monitor to DUT output."""
+        # Driver connects to Input of Pipe
         # Pipe has no backpressure/ready, so pass None for full
-        self.sender.connect(
+        self.driver.connect(
             self.dut,
             self.dut.clk,
             self.dut.din,
@@ -39,9 +39,9 @@ class PipeWrapper:
             full=None
         )
 
-        # PoolCollector connects to Output of Pipe
+        # PoolMonitor connects to Output of Pipe
         # Pipe output is valid/data
-        self.collector.connect(
+        self.monitor.connect(
             self.dut,
             self.dut.clk,
             self.dut.dout,
@@ -66,7 +66,7 @@ PIPE_RUNNER = Runner(file_config, build_config, current_dir=Path(__file__).paren
 
 @cocotb.test()
 async def test_pipe_basic(dut):
-    """Test basic Sender/Collector functionality with pipeline."""
+    """Test basic Driver/Monitor functionality with pipeline."""
     # Create clock
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
 
@@ -85,23 +85,23 @@ async def test_pipe_basic(dut):
     seq = random_seq_gen(length=20)
     dut._log.info(f"[Test] Generated test sequence: {seq}")
 
-    wrapper.sender.load(seq)
+    wrapper.driver.load(seq)
 
-    # Run collector and sender
+    # Run monitor and driver
     stop_event = Event()
-    collector_task = cocotb.start_soon(wrapper.collector.run(stop_event))
+    monitor_task = cocotb.start_soon(wrapper.monitor.run(stop_event))
 
-    await wrapper.sender.run()
+    await wrapper.driver.run()
 
     # Wait for pipeline delay (approx 4 cycles + margin)
     for _ in range(10):
         await RisingEdge(dut.clk)
 
     stop_event.set()
-    await collector_task
+    await monitor_task
 
     # Verify results
-    collected_data = wrapper.collector.dump()
+    collected_data = wrapper.monitor.dump()
     dut._log.info(f"[Test] Sent: {seq}")
     dut._log.info(f"[Test] Received: {collected_data}")
 
@@ -109,17 +109,17 @@ async def test_pipe_basic(dut):
     dut._log.info("[Test] Data verification PASSED!")
 
     # Generate timing visualization
-    sender_times = wrapper.sender.dump_time()
-    collector_times = wrapper.collector.dump_time()
+    driver_times = wrapper.driver.dump_time()
+    monitor_times = wrapper.monitor.dump_time()
 
     graph_path = Path("sim_pipe_default_verilator_test_pipe") / "pipe_timing.png"
 
     temporal_event.draw_temporal_event_seqs(
         path=graph_path,
-        names=["Sender Valid", "PoolCollector Valid"],
-        seqs=[sender_times, collector_times],
+        names=["Driver Valid", "PoolMonitor Valid"],
+        seqs=[driver_times, monitor_times],
         unit="sim_steps",
-        title="Pipe Sender/PoolCollector Timing"
+        title="Pipe Driver/PoolMonitor Timing"
     )
 
     dut._log.info(f"[Test] Timing graph saved to {graph_path}")
@@ -142,21 +142,21 @@ async def test_pipe_single_value(dut):
 
     # Single value
     seq = [42]
-    wrapper.sender.load(seq)
+    wrapper.driver.load(seq)
 
     stop_event = Event()
-    collector_task = cocotb.start_soon(wrapper.collector.run(stop_event))
+    monitor_task = cocotb.start_soon(wrapper.monitor.run(stop_event))
 
-    await wrapper.sender.run()
+    await wrapper.driver.run()
 
     # Wait for pipeline delay
     for _ in range(10):
         await RisingEdge(dut.clk)
 
     stop_event.set()
-    await collector_task
+    await monitor_task
 
-    collected_data = wrapper.collector.dump()
+    collected_data = wrapper.monitor.dump()
     assert collected_data == seq, f"Single value test failed! Expected {seq}, got {collected_data}"
     dut._log.info("[Test] Single value test PASSED!")
 

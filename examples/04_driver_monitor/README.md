@@ -1,12 +1,12 @@
-# Sender/Collector Example
+# Driver/Monitor Example
 
-This example demonstrates the Sender and PoolCollector classes for driving stimulus and capturing response from a hardware DUT.
+This example demonstrates the Driver and PoolMonitor classes for driving stimulus and capturing response from a hardware DUT.
 
 ## Overview
 
 - **DUT**: `pipe.sv` - Parameterized pipeline with configurable width and delay
-- **Test**: `test_pipe.py` - Demonstrates Sender and PoolCollector usage
-- **Purpose**: Show how to use Sender for driving inputs and PoolCollector for capturing outputs
+- **Test**: `test_pipe.py` - Demonstrates Driver and PoolMonitor usage
+- **Purpose**: Show how to use Driver for driving inputs and PoolMonitor for capturing outputs
 
 ## DUT Description
 
@@ -29,35 +29,35 @@ The `Pipe` module is a simple pipeline:
 
 ## Classes Demonstrated
 
-### Sender
+### Driver
 ```python
-from torchbit.tools import Sender
+from torchbit.tools import Driver
 
-sender = Sender(debug=True)
-sender.connect(dut, clk, data, valid, full=None)  # full=None for no backpressure
-sender.load([1, 2, 3, 4])  # Load data sequence
-await sender.run()  # Send data
+driver = Driver(debug=True)
+driver.connect(dut, clk, data, valid, full=None)  # full=None for no backpressure
+driver.load([1, 2, 3, 4])  # Load data sequence
+await driver.run()  # Send data
 ```
 
-### PoolCollector
+### PoolMonitor
 ```python
-from torchbit.tools import PoolCollector
+from torchbit.tools import PoolMonitor
 
-collector = PoolCollector(debug=True)
-collector.connect(dut, clk, data, valid)
+monitor = PoolMonitor(debug=True)
+monitor.connect(dut, clk, data, valid)
 
 stop_event = Event()
-cocotb.start_soon(collector.run(stop_event))
+cocotb.start_soon(monitor.run(stop_event))
 
 # Later...
 stop_event.set()
-data = collector.dump()  # Get collected data
+data = monitor.dump()  # Get collected data
 ```
 
 ## Running the Example
 
 ```bash
-cd examples/04_sender_collector
+cd examples/04_driver_monitor
 python run.py
 ```
 
@@ -83,18 +83,18 @@ The script will:
 ## File Structure
 
 ```
-04_sender_collector/
+04_driver_monitor/
 ├── README.md         # This file
 ├── run.py            # Entry point script
 ├── dut/
 │   └── pipe.sv       # Pipeline DUT
-└── test_pipe.py      # Cocotb test with Sender/Collector
+└── test_pipe.py      # Cocotb test with Driver/Monitor
 ```
 
 ## Key Concepts Demonstrated
 
-1. **Sender**: Driving stimulus with valid handshake
-2. **PoolCollector**: Capturing output on valid assertion
+1. **Driver**: Driving stimulus with valid handshake
+2. **PoolMonitor**: Capturing output on valid assertion
 3. **Timing Visualization**: Temporal event graphs
 4. **Data Verification**: Comparing sent vs received data
 5. **Wrapper Pattern**: Encapsulating DUT connections
