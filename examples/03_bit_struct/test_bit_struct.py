@@ -5,7 +5,8 @@ Demonstrates BitField and BitStruct classes for bit-level data manipulation.
 Useful for working with hardware registers, packed data structures, and protocol fields.
 """
 import torch
-from torchbit.tools.bit_struct import BitStruct, BitField, compare_bit_struct
+from torchbit.core.bit_struct import BitStruct, BitField
+from torchbit.debug import compare_bit_struct
 from torchbit.utils.bit_ops import get_bit, get_bit_slice, twos_complement
 
 

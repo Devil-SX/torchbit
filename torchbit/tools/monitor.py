@@ -9,6 +9,7 @@ from cocotb.triggers import RisingEdge, Event
 from cocotb.utils import get_sim_time
 from cocotb.handle import Immediate
 from .port import InputPort, OutputPort
+from ..core.int_sequence import IntSequence
 from typing import List
 
 
@@ -26,7 +27,7 @@ class PoolMonitor:
 
     Attributes:
         debug (bool): Enable debug logging.
-        data (list): Collected data values.
+        data (IntSequence): Collected data values.
         timestamps (list): Simulation timestamps when data was captured.
 
     Example:
@@ -51,7 +52,7 @@ class PoolMonitor:
             debug: If True, enable debug logging for each captured value.
         """
         self.debug = debug
-        self.data: List[int] = []
+        self.data: IntSequence = IntSequence()
         self.timestamps: List[tuple] = []
 
     def connect(self, dut, clk, data, valid) -> None:
@@ -96,11 +97,11 @@ class PoolMonitor:
                 if self.debug:
                     self.dut._log.info(f"[Monitor] Collected {val} at {t}")
 
-    def dump(self) -> List[int]:
+    def dump(self) -> IntSequence:
         """Get all collected data values.
 
         Returns:
-            List of captured data values in order.
+            IntSequence of captured data values in order.
         """
         return self.data
 
@@ -148,7 +149,7 @@ class FIFOMonitor:
         """
         self.debug = debug
         print(f"[FIFOMonitor] Initialized {debug=}")
-        self.data: List[int] = []
+        self.data: IntSequence = IntSequence()
         self.timestamps: List[tuple] = []
 
     def connect(self, dut, clk, data, empty, ready, valid=None) -> None:
@@ -221,11 +222,11 @@ class FIFOMonitor:
 
         # Cleanup: No ready_port to set to 0.
 
-    def dump(self) -> List[int]:
+    def dump(self) -> IntSequence:
         """Get all collected data values.
 
         Returns:
-            List of captured data values in order.
+            IntSequence of captured data values in order.
         """
         return self.data
 

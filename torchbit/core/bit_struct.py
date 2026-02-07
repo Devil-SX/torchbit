@@ -62,7 +62,7 @@ def BitStruct(fields: List[BitField], lsb_first: bool = True):
         ValueError: If duplicate field names are provided.
 
     Example:
-        >>> from torchbit.tools.bit_struct import BitField, BitStruct
+        >>> from torchbit.core.bit_struct import BitField, BitStruct
         >>>
         >>> # Define fields for RISC-V R-type instruction
         >>> fields = [

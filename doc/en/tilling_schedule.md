@@ -47,7 +47,7 @@ This describes the computation process, i.e., the dimension relationships before
 
 ## Scheduler Layer
 
-### Hardware Matrix Lowering
+### Hardware Vector Sequence Lowering
 
 The scheduler layer describes how a computation is executed. In the PyTorch ecosystem, this part is hidden in backend compilers and CUDA operator libraries, where the compilation process automatically generates the required scheduling strategies. However, if you need to implement hardware or compilers yourself, you must explicitly define the scheduler layer.
 
@@ -117,24 +117,24 @@ The above process can be understood in two steps:
 
 The final 2D matrix has the first dimension as the time dimension and the second dimension as the spatial dimension.
 
-#### Software Tensor vs Hardware Matrix
+#### Software Tensor vs Hardware Vector Sequence
 
-We call this 2D matrix a **Hardware Matrix** because it is hardware-related and carries hardware information:
-- First dimension is processing time dimension
-- Second dimension is spatial dimension
+We call this 2D matrix a **Hardware Vector Sequence** (also known as **Hardware Matrix**) because it is hardware-related and carries hardware information:
+- First dimension is the temporal dimension, **ordered by time: lower indices represent earlier time steps** (i.e., index 0 corresponds to the first time step, index 1 to the second, and so on)
+- Second dimension is the spatial dimension
 
-The spatial dimension of the hardware matrix corresponds to the **Hardware Vector**, reflecting hardware parallelism and tile size granularity.
+The spatial dimension of the hardware vector sequence corresponds to the **Hardware Vector**, reflecting hardware parallelism and tile size granularity. A hardware vector sequence is essentially an ordered collection of hardware vectors arranged in temporal order.
 
 Correspondingly, the multidimensional Tensor before transformation is called a **Software Tensor**.
 
-The transformation process from software tensor to hardware matrix defines a **Scheduling**, also called **Lowering**.
+The transformation process from software tensor to hardware vector sequence defines a **Scheduling**, also called **Lowering**.
 
-Conversely, the inverse transformation process from hardware matrix to software tensor is called **De-scheduling** or **Raising**, following the reverse order of desort-detilling-depad.
+Conversely, the inverse transformation process from hardware vector sequence to software tensor is called **De-scheduling** or **Raising**, following the reverse order of desort-detilling-depad.
 
 
 ### Index Calculation
 
-For specific hardware implementation, the spatial dimension of the hardware matrix represents hardware computational parallelism, and the time dimension reflects control flow. Control flow is essentially a mapping relationship describing how to map multidimensional indices to a one-dimensional scalar. Here we define two mappings: **Serialization** and **Addressing**.
+For specific hardware implementation, the spatial dimension of the hardware vector sequence represents hardware computational parallelism, and the time dimension reflects control flow. Control flow is essentially a mapping relationship describing how to map multidimensional indices to a one-dimensional scalar. Here we define two mappings: **Serialization** and **Addressing**.
 
 #### Serialization
 
@@ -161,6 +161,6 @@ addr = addr_base + bt * bt_stride + ct * ct_stride + ht * ht_stride + wt * wt_st
 
 ### Data Structures
 
-For such hardware matrices, the actual runtime hardware storage structures include:
+For such hardware vector sequences, the actual runtime hardware storage structures include:
 - **Serialization structure**: Can be implemented through FIFO (First-In-First-Out) queues
 - **Addressing structure**: Implemented through Buffer read/write operations

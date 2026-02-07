@@ -5,7 +5,7 @@ Provides the compare_bit_struct function for field-by-field comparison
 of BitStruct instances, useful for verifying protocol headers and
 instruction fields.
 """
-from torchbit.tools.bit_struct import BitField
+from torchbit.core.bit_struct import BitField
 
 
 def compare_bit_struct(expect, real) -> list[dict]:
@@ -35,7 +35,7 @@ def compare_bit_struct(expect, real) -> list[dict]:
                    different field definitions).
 
     Example:
-        >>> from torchbit.tools.bit_struct import BitField, BitStruct
+        >>> from torchbit.core.bit_struct import BitField, BitStruct
         >>> from torchbit.debug import compare_bit_struct
         >>>
         >>> # Define fields

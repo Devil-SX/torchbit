@@ -20,7 +20,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 
 from torchbit.tools import TwoPortBuffer
-from torchbit.tiling import TileMapping
+from torchbit.tiling import TileMapping, AddressMapping
 from torchbit.core.dtype import dtype_to_bits
 from torchbit.core.vector import Vector
 import torch
@@ -126,20 +126,25 @@ class TileMoverWrapper:
         # Memory layout: (b*w*ct, cs) - flat temporal index, spatial elements per address
         #
         # sw_einops: "b w (ct cs)" - software dimension layout
-        # hw_einops: "(b w ct) cs" - 2D hardware matrix: (temporal) (spatial)
+        # hw_einops: "(b w ct) cs" - hardware vector sequence: (temporal) (spatial)
         src_mapping = TileMapping(
             dtype=self.DTYPE,
             sw_einops="b w (ct cs)",
             hw_einops="(b w ct) cs",
             hw_temp_dim={"b": b, "w": w, "ct": ct},
             hw_spat_dim={"cs": self.CS},
-            base_addr=base_addr,
-            strides={"b": w * ct, "w": ct, "ct": 1}  # stride for b: w*ct, w: ct, ct: 1
+        )
+
+        src_addr_mapping = AddressMapping(
+            base=base_addr,
+            hw_temp_einops="b w ct",
+            hw_temp_dim={"b": b, "w": w, "ct": ct},
+            hw_temp_stride={"b": w * ct, "w": ct, "ct": 1},
         )
 
         # Convert to int16 and load using mapping
         tensor_int = tensor.to(self.DTYPE)
-        self.buffer.init_from_tensor(tensor_int, src_mapping)
+        self.buffer.init_from_tensor(tensor_int, src_mapping, src_addr_mapping)
 
         if self.debug:
             self.dut._log.info(f"[Wrapper] Loaded {b}x{w}x{c} tensor at base_addr={base_addr:#x}")

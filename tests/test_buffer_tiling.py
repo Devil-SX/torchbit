@@ -8,7 +8,7 @@ import pytest
 import torch
 import torchbit
 from torchbit.tools.buffer import TwoPortBuffer
-from torchbit.tiling import TileMapping
+from torchbit.tiling import TileMapping, AddressMapping
 
 
 class TestBufferTilingBasic:
@@ -65,18 +65,17 @@ class TestBufferInitFromTensor:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
         )
 
         # Initialize buffer from tensor
-        buf.init_from_tensor(tensor, mapping)
-
-        # Verify by reading back specific locations
-        # Each 4x4=16 elements fit in one address (128 bits / 32 bits = 4 floats)
-        # So we expect 3 channels / 4 per line = not exactly, let's verify
-        # 128 bits / 32 bits per float = 4 floats per address
-        # 4*4 = 16 floats per channel / 4 = 4 addresses per channel
+        buf.init_from_tensor(tensor, mapping, addr_mapping)
 
     def test_init_from_tensor_with_base_addr(self, buffer_128x512):
         """Test tensor initialization with non-zero base address."""
@@ -91,11 +90,16 @@ class TestBufferInitFromTensor:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0x100,
-            strides=None,
         )
 
-        buf.init_from_tensor(tensor, mapping)
+        addr_mapping = AddressMapping(
+            base=0x100,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
+        )
+
+        buf.init_from_tensor(tensor, mapping, addr_mapping)
 
         # Read from the base address
         value = buf.read(0x100)
@@ -114,11 +118,16 @@ class TestBufferInitFromTensor:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0,
-            strides={"c": 16},  # Each channel 16 addresses apart
         )
 
-        buf.init_from_tensor(tensor, mapping)
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 16},  # Each channel 16 addresses apart
+        )
+
+        buf.init_from_tensor(tensor, mapping, addr_mapping)
 
         # Verify data is at strided locations
         assert buf.read(0) != 0
@@ -143,14 +152,19 @@ class TestBufferDumpToTensor:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0,
-            strides=None,
         )
 
-        buf.init_from_tensor(original, mapping)
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
+        )
+
+        buf.init_from_tensor(original, mapping, addr_mapping)
 
         # Dump back to tensor
-        recovered = buf.dump_to_tensor(mapping)
+        recovered = buf.dump_to_tensor(mapping, addr_mapping)
 
         # Verify equality
         assert torch.equal(original, recovered)
@@ -168,12 +182,17 @@ class TestBufferDumpToTensor:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0x100,
-            strides=None,
         )
 
-        buf.init_from_tensor(original, mapping)
-        recovered = buf.dump_to_tensor(mapping)
+        addr_mapping = AddressMapping(
+            base=0x100,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
+        )
+
+        buf.init_from_tensor(original, mapping, addr_mapping)
+        recovered = buf.dump_to_tensor(mapping, addr_mapping)
 
         assert torch.equal(original, recovered)
 
@@ -194,13 +213,18 @@ class TestBufferRoundtrip:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 8, "w": 8},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping)
-        recovered = buf.dump_to_tensor(mapping)
+        buf.init_from_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.dump_to_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -217,13 +241,18 @@ class TestBufferRoundtrip:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 8, "w": 8},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping)
-        recovered = buf.dump_to_tensor(mapping)
+        buf.init_from_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.dump_to_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -240,13 +269,18 @@ class TestBufferRoundtrip:
             hw_einops="c (h w)",  # Keep channel separate, combine h and w
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping)
-        recovered = buf.dump_to_tensor(mapping)
+        buf.init_from_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.dump_to_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -263,13 +297,18 @@ class TestBufferRoundtrip:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 4},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0,  # Use base_addr=0 to stay within buffer bounds
-            strides={"c": 32},  # Each channel is 16 elements apart, use 32 to leave gaps
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 4},
+            hw_temp_stride={"c": 32},  # Each channel is 32 addresses apart
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping)
-        recovered = buf.dump_to_tensor(mapping)
+        buf.init_from_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.dump_to_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -290,13 +329,18 @@ class TestBufferMultipleDtypes:
             hw_einops="c (h w)",  # 2D: c=temporal, (h w)=spatial
             hw_temp_dim={"c": 2},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 2},
+            hw_temp_stride={"c": 1},
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping)
-        recovered = buf.dump_to_tensor(mapping)
+        buf.init_from_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.dump_to_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -425,15 +469,20 @@ class TestBufferBackdoorParallel:
             hw_einops="c (h w)",
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 4, "w": 4},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
         )
 
         # Use new backdoor_load_tensor
-        buf.backdoor_load_tensor(tensor, mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
 
         # Use new backdoor_dump_tensor
-        recovered = buf.backdoor_dump_tensor(mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 

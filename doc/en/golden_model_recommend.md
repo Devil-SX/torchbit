@@ -57,16 +57,16 @@ module add_unit (
 
 ## torchbit Solution
 
-torchbit's `TileMapping` abstraction supports mapping between [Software-style Tensor](../zh-CN/tilling_schedule.md) and Hardware-style Matrix, while instruction information can be described and defined using `BitStruct`.
+torchbit's `TileMapping` abstraction supports mapping between [Software-style Tensor](../zh-CN/tilling_schedule.md) and Hardware Vector Sequence, while instruction information can be described and defined using `BitStruct`.
 
 ### Data Loading Paths
 
-- **Path 1**: Software Tensor &rarr; TileMapping &rarr; Hardware Matrix &rarr; Backdoor Write &rarr; Driver (FIFO/Buffer) &rarr; Front-door Interaction &rarr; Hardware Unit
+- **Path 1**: Software Tensor &rarr; TileMapping &rarr; Hardware Vector Sequence &rarr; Backdoor Write &rarr; Driver (FIFO/Buffer) &rarr; Front-door Interaction &rarr; Hardware Unit
 - **Path 2**: Software Tensor &rarr; Shape Dimension Parsing &rarr; Instruction Generation &rarr; Hardware Unit
 
 ### Data Saving Path
 
-Hardware Unit &rarr; Front-door Interaction &rarr; Receiver (FIFO/Buffer) &rarr; Backdoor Read &rarr; Hardware Matrix &rarr; TileMapping Reverse Mapping &rarr; Software Tensor
+Hardware Unit &rarr; Front-door Interaction &rarr; Receiver (FIFO/Buffer) &rarr; Backdoor Read &rarr; Hardware Vector Sequence &rarr; TileMapping Reverse Mapping &rarr; Software Tensor
 
 ## Pure Software Golden Model
 

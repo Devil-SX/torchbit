@@ -8,7 +8,8 @@ This module provides functionality for:
 """
 
 from .pad_utils import get_padlen, pad, depad, depad_like
-from .mapping import AddressMapping, TileMapping, tensor_to_cocotb_seq, cocotb_seq_to_tensor
+from .address_mapping import AddressMapping, ContiguousAddressMapping
+from .tile_mapping import TileMapping, tensor_to_cocotb_seq, cocotb_seq_to_tensor
 
 __all__ = [
     # pad_utils
@@ -16,8 +17,10 @@ __all__ = [
     "pad",
     "depad",
     "depad_like",
-    # mapping
+    # address_mapping
     "AddressMapping",
+    "ContiguousAddressMapping",
+    # tile_mapping
     "TileMapping",
     "tensor_to_cocotb_seq",
     "cocotb_seq_to_tensor",

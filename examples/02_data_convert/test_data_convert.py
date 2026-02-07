@@ -7,7 +7,7 @@ and hardware-compatible formats.
 No DUT is required for this example - it runs as a Python script.
 """
 import torch
-from torchbit.core import Vector, Matrix, tensor_to_cocotb, cocotb_to_tensor
+from torchbit.core import Vector, VectorSequence, tensor_to_cocotb, cocotb_to_tensor
 
 
 def test_vector_conversions():
@@ -99,10 +99,10 @@ def test_vector_conversions():
     print()
 
 
-def test_matrix_conversions():
-    """Test Matrix class for 2D tensor conversion with file I/O."""
+def test_vector_sequence_conversions():
+    """Test VectorSequence class for 2D tensor conversion with file I/O."""
     print("=" * 60)
-    print("Matrix Conversion Tests")
+    print("VectorSequence Conversion Tests")
     print("=" * 60)
     print()
 
@@ -110,9 +110,9 @@ def test_matrix_conversions():
     from pathlib import Path
 
     # Test 1: Matrix to/from memory hex file
-    print("Test 1: Matrix Memory Hex File Roundtrip")
+    print("Test 1: VectorSequence Memory Hex File Roundtrip")
     tensor_2d = torch.randn(4, 4, dtype=torch.float32)
-    mat = Matrix.from_tensor(tensor_2d)
+    mat = VectorSequence.from_tensor(tensor_2d)
     print(f"  Original tensor shape: {tensor_2d.shape}")
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -120,17 +120,17 @@ def test_matrix_conversions():
         mat.to_memhexfile(hex_path)
         print(f"  Written to: {hex_path}")
 
-        mat_loaded = Matrix.from_memhexfile(hex_path, torch.float32)
+        mat_loaded = VectorSequence.from_memhexfile(hex_path, torch.float32)
         print(f"  Loaded tensor shape: {mat_loaded.tensor.shape}")
 
-        assert torch.allclose(tensor_2d, mat_loaded.tensor), "Matrix hex roundtrip failed!"
+        assert torch.allclose(tensor_2d, mat_loaded.tensor), "VectorSequence hex roundtrip failed!"
         print("  PASSED: Memory hex file roundtrip")
     print()
 
     # Test 2: Matrix to/from binary file
-    print("Test 2: Matrix Binary File Roundtrip")
+    print("Test 2: VectorSequence Binary File Roundtrip")
     tensor_2d_int = torch.randint(-100, 100, (4, 8), dtype=torch.int32)
-    mat_int = Matrix.from_tensor(tensor_2d_int)
+    mat_int = VectorSequence.from_tensor(tensor_2d_int)
     print(f"  Original tensor shape: {tensor_2d_int.shape}")
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -138,15 +138,15 @@ def test_matrix_conversions():
         mat_int.to_binfile(bin_path)
         print(f"  Written to: {bin_path}")
 
-        mat_int_loaded = Matrix.from_binfile(bin_path, num=8, dtype=torch.int32)
+        mat_int_loaded = VectorSequence.from_binfile(bin_path, num=8, dtype=torch.int32)
         print(f"  Loaded tensor shape: {mat_int_loaded.tensor.shape}")
 
-        assert torch.equal(tensor_2d_int, mat_int_loaded.tensor), "Matrix binary roundtrip failed!"
+        assert torch.equal(tensor_2d_int, mat_int_loaded.tensor), "VectorSequence binary roundtrip failed!"
         print("  PASSED: Binary file roundtrip")
     print()
 
     # Test 3: Matrix with different dtypes
-    print("Test 3: Matrix with Different Dtypes")
+    print("Test 3: VectorSequence with Different Dtypes")
     for dtype in [torch.int8, torch.int16, torch.float16]:
         if dtype == torch.int8:
             test_tensor = torch.randint(50, 100, (2, 4), dtype=dtype)
@@ -155,16 +155,16 @@ def test_matrix_conversions():
         else:
             test_tensor = torch.randn(2, 4, dtype=dtype)
 
-        test_mat = Matrix.from_tensor(test_tensor)
+        test_mat = VectorSequence.from_tensor(test_tensor)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             test_path = Path(tmpdir) / "test.bin"
             test_mat.to_binfile(test_path)
 
             if dtype == torch.float16:
-                loaded_mat = Matrix.from_binfile(test_path, num=4, dtype=dtype)
+                loaded_mat = VectorSequence.from_binfile(test_path, num=4, dtype=dtype)
             else:
-                loaded_mat = Matrix.from_binfile(test_path, num=4, dtype=dtype)
+                loaded_mat = VectorSequence.from_binfile(test_path, num=4, dtype=dtype)
 
             if dtype == torch.float16:
                 assert torch.allclose(test_tensor, loaded_mat.tensor, atol=1e-3), f"{dtype} roundtrip failed!"
@@ -175,7 +175,7 @@ def test_matrix_conversions():
     print()
 
     print("=" * 60)
-    print("All Matrix tests passed!")
+    print("All VectorSequence tests passed!")
     print("=" * 60)
     print()
 
@@ -215,14 +215,14 @@ def main():
     print()
     print("This example demonstrates:")
     print("  - Vector class for 1D tensor <-> integer conversion")
-    print("  - Matrix class for 2D tensor <-> file conversion")
+    print("  - VectorSequence class for 2D tensor <-> file conversion")
     print("  - Support for multiple dtypes: float32, float16, bfloat16, int8, int16, int32, uint8")
     print("  - Roundtrip verification for all conversions")
     print()
 
     try:
         test_vector_conversions()
-        test_matrix_conversions()
+        test_vector_sequence_conversions()
         test_shortcut_functions()
 
         print()

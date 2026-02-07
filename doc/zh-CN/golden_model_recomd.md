@@ -57,16 +57,16 @@ module add_unit (
 
 ## torchbit 解决方案
 
-torchbit 的 `TileMapping` 抽象支持在 [Software-style Tensor](./tilling_schedule.md) 和 Hardware-style Matrix 之间进行映射，而指令信息支持使用 `BitStruct` 进行描述定义。
+torchbit 的 `TileMapping` 抽象支持在 [Software-style Tensor](./tilling_schedule.md) 和 Hardware Vector Sequence（硬件向量序列）之间进行映射，而指令信息支持使用 `BitStruct` 进行描述定义。
 
 ### 数据加载路径
 
-- **路径1**：软件 Tensor &rarr; TileMapping &rarr; Hardware Matrix &rarr; 后门写入 &rarr; Driver (FIFO/Buffer) &rarr; 前门交互 &rarr; Hardware Unit
+- **路径1**：软件 Tensor &rarr; TileMapping &rarr; Hardware Vector Sequence &rarr; 后门写入 &rarr; Driver (FIFO/Buffer) &rarr; 前门交互 &rarr; Hardware Unit
 - **路径2**：软件 Tensor &rarr; shape 维度解析 &rarr; 指令信息生成 &rarr; Hardware Unit
 
 ### 数据保存路径
 
-Hardware Unit &rarr; 前门交互 &rarr; Receiver (FIFO/Buffer) &rarr; 后门读出 &rarr; Hardware Matrix &rarr; TileMapping 逆映射 &rarr; 软件 Tensor
+Hardware Unit &rarr; 前门交互 &rarr; Receiver (FIFO/Buffer) &rarr; 后门读出 &rarr; Hardware Vector Sequence &rarr; TileMapping 逆映射 &rarr; 软件 Tensor
 
 ## 纯软件 Golden Model
 

@@ -1,7 +1,7 @@
 """
 2D tensor conversion utilities for memory-mapped hardware verification.
 
-Provides the Matrix class for converting between PyTorch 2D tensors and
+Provides the VectorSequence class for converting between PyTorch 2D tensors and
 memory files (hex/bin) used with Verilog $readmemh/$writememh and similar
 system tasks. Essential for verifying memory-mapped IP blocks and loading
 initial memory contents.
@@ -95,14 +95,14 @@ def to_bytes(arr: np.ndarray, endianess: str = "little") -> bytes:
     return arr.tobytes()
 
 
-class Matrix:
+class VectorSequence:
     """A 2D tensor wrapper for memory-mapped hardware verification.
 
-    Matrix handles 2D tensors for verifying memory-mapped interfaces.
+    VectorSequence handles 2D tensors for verifying memory-mapped interfaces.
     It supports reading/writing to memory hex files and binary files
     commonly used with Verilog $readmemh/$writememh.
 
-    The Matrix class is designed for:
+    The VectorSequence class is designed for:
     - Loading initial memory contents from files
     - Dumping simulation results to files
     - Verifying memory-mapped IP blocks
@@ -116,24 +116,24 @@ class Matrix:
 
     Example:
         >>> import torch
-        >>> from torchbit.core import Matrix
+        >>> from torchbit.core import VectorSequence
         >>>
         >>> # Load from memory hex file
-        >>> matrix = Matrix.from_memhexfile("memory.hex", torch.float32)
-        >>> print(matrix.tensor.shape)  # e.g., torch.Size([256, 4])
+        >>> vs = VectorSequence.from_memhexfile("memory.hex", torch.float32)
+        >>> print(vs.tensor.shape)  # e.g., torch.Size([256, 4])
         >>>
         >>> # Dump to memory hex file
-        >>> matrix.to_memhexfile("output.hex")
+        >>> vs.to_memhexfile("output.hex")
         >>>
         >>> # Create from tensor
         >>> tensor = torch.randn(256, 4)
-        >>> matrix = Matrix.from_tensor(tensor)
+        >>> vs = VectorSequence.from_tensor(tensor)
 
     Typical usage in Cocotb tests:
         >>> @cocotb.test
         >>> async def test_memory(dut):
         >>>     # Load memory contents
-        >>>     mem_matrix = Matrix.from_memhexfile("init.hex", torch.float32)
+        >>>     mem_vs = VectorSequence.from_memhexfile("init.hex", torch.float32)
         >>>     await dut.mem_init.value  # Signal that memory is ready
         >>>
         >>>     # Read memory through interface
@@ -145,7 +145,7 @@ class Matrix:
     """
 
     def __init__(self, tensor: torch.Tensor = None):
-        """Initialize a Matrix with a 2D tensor.
+        """Initialize a VectorSequence with a 2D tensor.
 
         Args:
             tensor: A 2D PyTorch tensor. Must have exactly 2 dimensions.
@@ -157,32 +157,32 @@ class Matrix:
         self.tensor = tensor
 
     @staticmethod
-    def from_tensor(tensor: torch.Tensor) -> "Matrix":
-        """Create a Matrix from a 2D PyTorch tensor.
+    def from_tensor(tensor: torch.Tensor) -> "VectorSequence":
+        """Create a VectorSequence from a 2D PyTorch tensor.
 
         Args:
             tensor: A 2D PyTorch tensor of any supported dtype.
 
         Returns:
-            A new Matrix instance containing the tensor.
+            A new VectorSequence instance containing the tensor.
 
         Raises:
             AssertionError: If tensor does not have exactly 2 dimensions.
 
         Example:
             >>> import torch
-            >>> from torchbit.core import Matrix
+            >>> from torchbit.core import VectorSequence
             >>> tensor = torch.randn(256, 4)
-            >>> matrix = Matrix.from_tensor(tensor)
+            >>> vs = VectorSequence.from_tensor(tensor)
         """
-        return Matrix(tensor)
+        return VectorSequence(tensor)
 
     @staticmethod
-    def from_memhexfile(in_path: str | Path, dtype: torch.dtype, endianess: str = "little") -> "Matrix":
-        """Create a Matrix by reading a memory hex file.
+    def from_memhexfile(in_path: str | Path, dtype: torch.dtype, endianess: str = "little") -> "VectorSequence":
+        """Create a VectorSequence by reading a memory hex file.
 
         Reads a file in $readmemh format and converts to a 2D tensor.
-        Each line in the hex file becomes one row in the matrix.
+        Each line in the hex file becomes one row in the VectorSequence.
 
         The hex file format expects one hexadecimal value per line,
         optionally with underscores for readability.
@@ -195,13 +195,13 @@ class Matrix:
                 Defaults to "little".
 
         Returns:
-            A new Matrix instance with the loaded tensor.
+            A new VectorSequence instance with the loaded tensor.
 
         Raises:
             AssertionError: If dtype is unsupported or file format is invalid.
 
         Example:
-            >>> matrix = Matrix.from_memhexfile("data.hex", torch.float32)
+            >>> vs = VectorSequence.from_memhexfile("data.hex", torch.float32)
             >>> # hex file contents:
             >>> # 00000000
             >>> # 3f800000
@@ -224,11 +224,11 @@ class Matrix:
             tensor_list.append(tensor_row)
 
         tensor = torch.stack(tensor_list)
-        return Matrix(tensor.view(dtype))
+        return VectorSequence(tensor.view(dtype))
 
     @staticmethod
-    def from_binfile(in_path: str | Path, num: int, dtype: torch.dtype, endianess: str = "little") -> "Matrix":
-        """Create a Matrix by reading a binary file.
+    def from_binfile(in_path: str | Path, num: int, dtype: torch.dtype, endianess: str = "little") -> "VectorSequence":
+        """Create a VectorSequence by reading a binary file.
 
         Reads raw binary data and converts to a 2D tensor.
         Each read operation produces `num` elements per row.
@@ -242,14 +242,14 @@ class Matrix:
                 Defaults to "little".
 
         Returns:
-            A new Matrix instance with the loaded tensor.
+            A new VectorSequence instance with the loaded tensor.
 
         Raises:
             AssertionError: If dtype is unsupported.
 
         Example:
             >>> # Read binary data, 16 elements per row
-            >>> matrix = Matrix.from_binfile("data.bin", num=16, dtype=torch.float32)
+            >>> vs = VectorSequence.from_binfile("data.bin", num=16, dtype=torch.float32)
         """
         assert dtype in dtype_to_bits.keys()
         bit_length = dtype_to_bits[dtype]
@@ -266,10 +266,10 @@ class Matrix:
                 tensor_list.append(tensor_row)
 
         tensor = torch.stack(tensor_list)
-        return Matrix(tensor.view(dtype))
+        return VectorSequence(tensor.view(dtype))
 
     def to_memhexfile(self, out_path: str | Path, endianess: str = "little") -> None:
-        """Write the Matrix to a memory hex file.
+        """Write the VectorSequence to a memory hex file.
 
         Dumps the 2D tensor to a file in $readmemh compatible format.
         Each tensor row becomes one line in the hex file containing
@@ -285,7 +285,7 @@ class Matrix:
             AssertionError: If tensor is not 2D or dtype is unsupported.
 
         Example:
-            >>> matrix.to_memhexfile("output.hex")
+            >>> vs.to_memhexfile("output.hex")
             >>> # produces:
             >>> # 00000000
             >>> # 3f800000
@@ -312,7 +312,7 @@ class Matrix:
                 f.write(hex_row + "\n")
 
     def to_binfile(self, out_path: str | Path, endianess: str = "little") -> None:
-        """Write the Matrix to a binary file.
+        """Write the VectorSequence to a binary file.
 
         Dumps the 2D tensor to a raw binary file.
         Each tensor row is written as a sequence of bytes.
@@ -327,7 +327,7 @@ class Matrix:
             AssertionError: If tensor is not 2D or dtype is unsupported.
 
         Example:
-            >>> matrix.to_binfile("output.bin")
+            >>> vs.to_binfile("output.bin")
         """
         # load a tensor and save as binary that verilog could read
         # assert is a 2D tensor
@@ -352,10 +352,14 @@ class Matrix:
         """Get the underlying PyTorch tensor.
 
         Returns:
-            The 2D PyTorch tensor stored in this Matrix.
+            The 2D PyTorch tensor stored in this VectorSequence.
 
         Example:
-            >>> matrix = Matrix.from_tensor(torch.randn(256, 4))
-            >>> tensor = matrix.to_tensor()
+            >>> vs = VectorSequence.from_tensor(torch.randn(256, 4))
+            >>> tensor = vs.to_tensor()
         """
         return self.tensor
+
+
+# Backward compatibility alias
+Matrix = VectorSequence

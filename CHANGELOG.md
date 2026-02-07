@@ -5,36 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - 2026-01-30
+## [Unreleased]
+
+## [2.3.0] - 2026-02-08
 
 ### Added
-- **Tiling:** Added `TileMapping` class for tensor-to-memory mapping with spatial/temporal dimension support.
-- **Tiling:** Added `AddressMapping` class for multi-dimensional to flat memory address translation.
-- **Tiling:** Added `pad_utils` module with einops-style padding functions: `pad()`, `depad()`, `depad_like()`, `get_padlen()`.
-- **Tools:** Added `backdoor_read()` and `backdoor_write()` to `Buffer` class for parallel bulk operations.
-- **Tools:** Added UVM-style backdoor operations to `Buffer` class: `backdoor_load_tensor()`, `backdoor_dump_tensor()`, `backdoor_load_matrix()`, `backdoor_dump_matrix()`.
-- **Documentation:** Added bilingual documentation structure with `doc/en/` (English) and `doc/zh-CN/` (Chinese) directories.
-- **Documentation:** Added `doc/en/tilling_schedule.md` with tiling operation specifications.
-- **Examples:** Added `06_tile_mapping` example demonstrating TileMapping with spatial/temporal dimensions.
-- **Commands:** Added unified `commit` command combining changelog update and git operations.
+- **Core:** Added `IntSequence` class (`class IntSequence(list)`) as typed integer sequence for all hardware verification interfaces.
+- **Core:** Added `BitStruct`/`BitField` to `torchbit.core` module (moved from `torchbit.tools`), re-exported from tools for backward compatibility.
+- **Tiling:** Added `ContiguousAddressMapping` subclass of `AddressMapping` with auto-computed row-major contiguous strides.
+- **Tiling:** Added `hw_temp_einops` parameter to `AddressMapping` for explicit dimension ordering (earlier = higher address bits). Dicts can now be passed in any key order.
+- **Tests:** Added tests for `ContiguousAddressMapping`, `AddressMapping` key validation, and unordered dict support.
+- **Tests:** Added backward compatibility tests for `Matrix` alias to `VectorSequence`.
 
 ### Changed
-- **Tiling:** Refactored `TileMapping` API - removed `->` from einops patterns, now uses `sw_einops` and `hw_einops` as separate properties.
-- **Tiling:** `TileMapping.hw_einops` must be 2D format `(temporal) (spatial)` for hardware matrix layout.
-- **Tiling:** Renamed `shape_process.py` to `pad_utils.py` with einops-style interface.
-- **Tools:** Refactored `backdoor_load_tensor()` and `backdoor_dump_tensor()` to use `mapping.to_hw()`/`to_sw()` and `backdoor_read()`/`backdoor_write()`.
-- **Tools:** `Buffer.init_from_tensor()` now uses `TileMapping.sw_to_hw_formula` for tensor-to-memory conversion.
-- **Documentation:** Separated Chinese and English documentation into distinct directories.
-- **Documentation:** Updated README.md to English-only, added README.zh-CN.md for Chinese.
+- **Core:** Renamed `Matrix` class to `VectorSequence` (file `matrix.py` → `vector_sequence.py`). `Matrix` alias kept for backward compatibility.
+- **Tiling:** Separated concerns: `TileMapping` handles only tensor↔IntSequence value conversion (no addresses), `AddressMapping` handles only address generation.
+- **Tiling:** Split `mapping.py` into `tile_mapping.py` and `address_mapping.py`.
+- **Tiling:** `AddressMapping.__init__` now requires `hw_temp_einops` parameter and asserts key consistency with `hw_temp_dim`/`hw_temp_stride`.
+- **Tiling:** `TileMapping` no longer has `base_addr` or `strides` fields. `to_hw()` returns only `IntSequence` values; `to_sw()` accepts only `IntSequence` values.
+- **Tools:** `Buffer.backdoor_load_tensor()` and `backdoor_dump_tensor()` now require both `TileMapping` and `AddressMapping` as mandatory parameters.
+- **Tools:** `Buffer.backdoor_read()` now returns `IntSequence` instead of `list[int]`.
+- **Tools:** `Driver` queue and `load()` method now use `IntSequence` type.
+- **Tools:** `PoolMonitor` and `FIFOMonitor` `data` and `dump()` now use `IntSequence` type.
+- **Documentation:** Renamed "Hardware Matrix" terminology to "Hardware Vector Sequence" across all docs (English and Chinese). "Hardware Matrix" kept as alias.
+- **Documentation:** Added emphasis that the temporal dimension is ordered: lower index = earlier time step.
+- **Commands:** Added CHANGELOG version order validation step to `commit` command.
 
 ### Removed
-- **Tools:** Removed `backdoor_read_write()` from `Buffer` class (functionality split into separate read/write).
-- **Commands:** Removed `update_changelog` and `update_git` commands (merged into `commit` command).
-- **Tools:** Removed deprecated `torchbit/tools/mapping.py` (functionality moved to `torchbit/tiling/mapping.py`).
-- **Tools:** Removed deprecated `torchbit/tools/shape_process.py` (replaced by `torchbit/tiling/pad_utils.py`).
-- **Documentation:** Removed `doc/tensor.md` and `doc/value.md` (content reorganized).
-
-## [Unreleased]
+- **Core:** Removed `torchbit/core/matrix.py` (replaced by `torchbit/core/vector_sequence.py`).
+- **Tiling:** Removed `torchbit/tiling/mapping.py` (split into `address_mapping.py` and `tile_mapping.py`).
+- **Tools:** Removed `torchbit/tools/bit_struct.py` (moved to `torchbit/core/bit_struct.py`).
+- **Tools:** Removed `import einops` from `buffer.py` (no longer needed, delegated to TileMapping).
 
 ## [2.2.0] - 2026-02-07
 
@@ -88,6 +89,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `wal_parser.py`: Basic WAL parsing
   - `waveform_tool.py`: Waveform analysis tools
 - **Debug:** `posedge_dump_to_csv()` now supports optional `signal_list` parameter (defaults to all signals) and stdout output.
+
+## [2.1.0] - 2026-01-30
+
+### Added
+- **Tiling:** Added `TileMapping` class for tensor-to-memory mapping with spatial/temporal dimension support.
+- **Tiling:** Added `AddressMapping` class for multi-dimensional to flat memory address translation.
+- **Tiling:** Added `pad_utils` module with einops-style padding functions: `pad()`, `depad()`, `depad_like()`, `get_padlen()`.
+- **Tools:** Added `backdoor_read()` and `backdoor_write()` to `Buffer` class for parallel bulk operations.
+- **Tools:** Added UVM-style backdoor operations to `Buffer` class: `backdoor_load_tensor()`, `backdoor_dump_tensor()`, `backdoor_load_matrix()`, `backdoor_dump_matrix()`.
+- **Documentation:** Added bilingual documentation structure with `doc/en/` (English) and `doc/zh-CN/` (Chinese) directories.
+- **Documentation:** Added `doc/en/tilling_schedule.md` with tiling operation specifications.
+- **Examples:** Added `06_tile_mapping` example demonstrating TileMapping with spatial/temporal dimensions.
+- **Commands:** Added unified `commit` command combining changelog update and git operations.
+
+### Changed
+- **Tiling:** Refactored `TileMapping` API - removed `->` from einops patterns, now uses `sw_einops` and `hw_einops` as separate properties.
+- **Tiling:** `TileMapping.hw_einops` must be 2D format `(temporal) (spatial)` for hardware vector sequence layout.
+- **Tiling:** Renamed `shape_process.py` to `pad_utils.py` with einops-style interface.
+- **Tools:** Refactored `backdoor_load_tensor()` and `backdoor_dump_tensor()` to use `mapping.to_hw()`/`to_sw()` and `backdoor_read()`/`backdoor_write()`.
+- **Tools:** `Buffer.init_from_tensor()` now uses `TileMapping.sw_to_hw_formula` for tensor-to-memory conversion.
+- **Documentation:** Separated Chinese and English documentation into distinct directories.
+- **Documentation:** Updated README.md to English-only, added README.zh-CN.md for Chinese.
+
+### Removed
+- **Tools:** Removed `backdoor_read_write()` from `Buffer` class (functionality split into separate read/write).
+- **Commands:** Removed `update_changelog` and `update_git` commands (merged into `commit` command).
+- **Tools:** Removed deprecated `torchbit/tools/mapping.py` (functionality moved to `torchbit/tiling/mapping.py`).
+- **Tools:** Removed deprecated `torchbit/tools/shape_process.py` (replaced by `torchbit/tiling/pad_utils.py`).
+- **Documentation:** Removed `doc/tensor.md` and `doc/value.md` (content reorganized).
 
 ## [2.0.0] - 2025-12-22
 ### Changed

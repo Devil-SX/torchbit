@@ -71,12 +71,10 @@ def simple_mapping_chw():
     """Create a simple TileMapping for CHW to linear memory."""
     return TileMapping(
         dtype=torch.float32,
-        sw_einops="c h w -> c h w",
-        hw_einops="c h w -> (c h w)",
+        sw_einops="c h w",
+        hw_einops="c (h w)",
         hw_temp_dim={"c": 3},
         hw_spat_dim={"h": 8, "w": 8},
-        base_addr=0,
-        strides=None,
     )
 
 
@@ -85,12 +83,10 @@ def mapping_nhwc():
     """Create a TileMapping for NHWC (channel-last) layout."""
     return TileMapping(
         dtype=torch.float32,
-        sw_einops="c h w -> c h w",
-        hw_einops="c h w -> (h w c)",
+        sw_einops="c h w",
+        hw_einops="c (h w)",
         hw_temp_dim={"c": 3},
         hw_spat_dim={"h": 8, "w": 8},
-        base_addr=0,
-        strides=None,
     )
 
 
@@ -99,24 +95,20 @@ def mapping_tiled():
     """Create a TileMapping for 2D tiled layout."""
     return TileMapping(
         dtype=torch.float32,
-        sw_einops="c h w -> c h w",
-        hw_einops="c (h th) (w tw) -> (th tw c) th tw",
+        sw_einops="c h w",
+        hw_einops="c (h w)",
         hw_temp_dim={"c": 3},
-        hw_spat_dim={"th": 2, "tw": 2},
-        base_addr=0,
-        strides=None,
+        hw_spat_dim={"h": 8, "w": 8},
     )
 
 
 @pytest.fixture
 def mapping_strided():
-    """Create a TileMapping with address strides."""
+    """Create a TileMapping with a corresponding AddressMapping."""
     return TileMapping(
         dtype=torch.float32,
-        sw_einops="c h w -> c h w",
-        hw_einops="c h w -> (c h w)",
+        sw_einops="c h w",
+        hw_einops="c (h w)",
         hw_temp_dim={"c": 3},
         hw_spat_dim={"h": 8, "w": 8},
-        base_addr=0x1000,
-        strides={"c": 64},
     )

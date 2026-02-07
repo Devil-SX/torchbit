@@ -56,7 +56,17 @@ Review all changed files and use judgment to determine if they are appropriate t
 5. Create new version section in CHANGELOG.md with today's date
 6. Move unreleased entries under the new version header
 
-### 5. Commit & Push
+### 5. Validate CHANGELOG Version Order
+
+After updating CHANGELOG.md, verify that version sections are in correct reverse-chronological order (newest first):
+
+1. Parse all `## [version]` headers in CHANGELOG.md
+2. Check that `[Unreleased]` is always at the top
+3. Check that versioned sections are sorted in descending semver order (e.g., `[2.2.0]` before `[2.1.0]` before `[2.0.0]`)
+4. If the order is wrong, fix it by reordering the sections so the newest version is first
+5. If a fix was applied, report the reordering to the user
+
+### 6. Commit & Push
 
 1. Run `git add .` to stage all changes
 2. Generate a commit message based on the diff

@@ -9,13 +9,14 @@ Core Concepts:
    - Buffer: Basic memory buffer for read/write operations
    - TwoPortBuffer: Dual-port memory with async read/write, supports backpressure
 
-2. BitStruct: Factory for bit-level struct manipulation
+2. BitStruct: Factory for bit-level struct manipulation (from torchbit.core)
    - Creates structured views of integer values
    - Fields can be accessed as attributes for convenient R/W
 
 3. TileMapping/AddressMapping: Tensor tiling and address mapping for memory arrays
-   - TileMapping: Configures tensor-to-memory transformation with einops
+   - TileMapping: Converts software tensors to/from hardware vector sequences with einops
    - AddressMapping: Maps multi-dimensional indices to flat memory addresses
+   - ContiguousAddressMapping: Row-major contiguous address mapping (strides auto-computed)
 
 4. Driver/PoolMonitor/FIFOMonitor: Data drivers and monitors for testbench
    - Driver: Drives data onto HDL signals with optional backpressure
@@ -46,12 +47,16 @@ Example:
     >>> # Define tensor-to-memory mapping
     >>> mapping = TileMapping(
     ...     dtype=torch.float32,
-    ...     sw_einops="h w -> h w",
-    ...     hw_einops="h w -> (h w)",
+    ...     sw_einops="h w",
+    ...     hw_einops="h w",
     ...     hw_temp_dim={"h": 4},
     ...     hw_spat_dim={"w": 16},
-    ...     base_addr=0x1000,
-    ...     strides={"h": 64, "w": 4}
+    ... )
+    >>> addr_mapping = AddressMapping(
+    ...     base=0x1000,
+    ...     hw_temp_einops="h",
+    ...     hw_temp_dim={"h": 4},
+    ...     hw_temp_stride={"h": 16},
     ... )
 
 Typical workflow:
@@ -64,7 +69,7 @@ Typical workflow:
 """
 from .buffer import *
 from .port import *
-from .bit_struct import *
+from ..core.bit_struct import *
 from .driver import *
 from .monitor import *
 

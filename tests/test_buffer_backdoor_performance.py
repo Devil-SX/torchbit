@@ -12,7 +12,7 @@ import cProfile
 import pstats
 import io
 from torchbit.tools.buffer import Buffer
-from torchbit.tiling import TileMapping
+from torchbit.tiling import TileMapping, AddressMapping
 
 
 class TestBufferBackdoorPerformance:
@@ -155,19 +155,24 @@ class TestBufferBackdoorPerformance:
             hw_einops="c (h w)",
             hw_temp_dim={"c": channels},
             hw_spat_dim={"h": height, "w": width},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": channels},
+            hw_temp_stride={"c": 1},
         )
 
         # Measure time
         start = time.perf_counter()
-        buf.backdoor_load_tensor(tensor, mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
         elapsed = time.perf_counter() - start
 
         # Measure memory
         buf2 = Buffer(width=128, depth=16384)
         tracemalloc.start()
-        buf2.backdoor_load_tensor(tensor, mapping)
+        buf2.backdoor_load_tensor(tensor, mapping, addr_mapping)
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
@@ -196,21 +201,26 @@ class TestBufferBackdoorPerformance:
             hw_einops="c (h w)",
             hw_temp_dim={"c": channels},
             hw_spat_dim={"h": height, "w": width},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": channels},
+            hw_temp_stride={"c": 1},
         )
 
         # Load first
-        buf.backdoor_load_tensor(original, mapping)
+        buf.backdoor_load_tensor(original, mapping, addr_mapping)
 
         # Measure dump time
         start = time.perf_counter()
-        result = buf.backdoor_dump_tensor(mapping)
+        result = buf.backdoor_dump_tensor(mapping, addr_mapping)
         elapsed = time.perf_counter() - start
 
         # Measure memory
         tracemalloc.start()
-        _ = buf.backdoor_dump_tensor(mapping)
+        _ = buf.backdoor_dump_tensor(mapping, addr_mapping)
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
@@ -245,14 +255,19 @@ class TestBufferBackdoorRoundtripPerformance:
             hw_einops="c (h w)",
             hw_temp_dim={"c": channels},
             hw_spat_dim={"h": height, "w": width},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": channels},
+            hw_temp_stride={"c": 1},
         )
 
         # Measure roundtrip time
         start = time.perf_counter()
-        buf.backdoor_load_tensor(original, mapping)
-        recovered = buf.backdoor_dump_tensor(mapping)
+        buf.backdoor_load_tensor(original, mapping, addr_mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
         elapsed = time.perf_counter() - start
 
         # Verify correctness
@@ -290,17 +305,12 @@ class TestBufferBackdoorProfiling:
     """Profiling tests for Buffer backdoor operations to identify bottlenecks."""
 
     def _profile_operation(self, operation, *args, **kwargs):
-        """Run an operation under cProfile and return parsed results.
-
-        Returns:
-            dict: Parsed profiling data with step breakdown
-        """
+        """Run an operation under cProfile and return parsed results."""
         profiler = cProfile.Profile()
         profiler.enable()
         result = operation(*args, **kwargs)
         profiler.disable()
 
-        # Parse profiling results
         s = io.StringIO()
         stats = pstats.Stats(profiler, stream=s)
         stats.strip_dirs()
@@ -309,12 +319,11 @@ class TestBufferBackdoorProfiling:
 
         output = s.getvalue()
 
-        # Parse the stats output to extract timing information
         lines = output.split('\n')
         steps = []
         total_time = 0
 
-        for line in lines[5:]:  # Skip header lines
+        for line in lines[5:]:
             if not line.strip():
                 continue
             parts = line.split()
@@ -322,17 +331,15 @@ class TestBufferBackdoorProfiling:
                 continue
             try:
                 ncalls = parts[0]
-                cumtime = float(parts[3])  # Cumulative time in seconds
-                percall = float(parts[4])   # Time per call
+                cumtime = float(parts[3])
+                percall = float(parts[4])
                 filename = parts[5]
 
-                # Filter out internal pytest/cPython calls
                 if any(x in filename for x in ['pytest', 'site-packages', 'lib/python', '__pycache__']):
                     continue
 
                 total_time += cumtime
 
-                # Extract function name
                 if '{method}' in filename:
                     func_name = filename.split('{method} ')[1].split('}')[0]
                 elif '(' in filename:
@@ -349,7 +356,6 @@ class TestBufferBackdoorProfiling:
             except (ValueError, IndexError):
                 continue
 
-        # Calculate percentages
         for step in steps:
             step['percent'] = (step['total_ms'] / (total_time * 1000)) * 100 if total_time > 0 else 0
 
@@ -372,7 +378,7 @@ class TestBufferBackdoorProfiling:
         print('-' * 90)
 
         for step in steps:
-            status = '⚠️ Bottleneck' if step['percent'] > 30 else ''
+            status = 'Bottleneck' if step['percent'] > 30 else ''
             print(f"{step['name']:<40} {step['calls']:<10} "
                   f"{step['total_ms']:<12.4f} {step['per_call_ms']:<12.6f} "
                   f"{step['percent']:<8.1f}% {status}")
@@ -385,7 +391,6 @@ class TestBufferBackdoorProfiling:
         """Profile backdoor_read with xlarge size (10000 elements)."""
         buf = Buffer(width=64, depth=16384)
 
-        # Pre-populate buffer
         size = 10000
         for i in range(size):
             buf.write(i, i * 0x1000 + 0xDEAD)
@@ -398,7 +403,6 @@ class TestBufferBackdoorProfiling:
         profile_data = self._profile_operation(read_operation)
         self._print_profile_table("backdoor_read(10000)", profile_data)
 
-        # Verify correctness
         values = profile_data['result']
         assert len(values) == size
 
@@ -458,12 +462,17 @@ class TestBufferBackdoorProfiling:
             hw_einops="c (h w)",
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 64, "w": 64},
-            base_addr=0,
-            strides=None,
+        )
+
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
         )
 
         def load_tensor_operation():
-            buf.backdoor_load_tensor(tensor, mapping)
+            buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
 
         profile_data = self._profile_operation(load_tensor_operation)
         self._print_profile_table("backdoor_load_tensor(3x64x64)", profile_data)
@@ -481,14 +490,19 @@ class TestBufferBackdoorProfiling:
             hw_einops="c (h w)",
             hw_temp_dim={"c": 3},
             hw_spat_dim={"h": 64, "w": 64},
-            base_addr=0,
-            strides=None,
         )
 
-        buf.backdoor_load_tensor(original, mapping)
+        addr_mapping = AddressMapping(
+            base=0,
+            hw_temp_einops="c",
+            hw_temp_dim={"c": 3},
+            hw_temp_stride={"c": 1},
+        )
+
+        buf.backdoor_load_tensor(original, mapping, addr_mapping)
 
         def dump_tensor_operation():
-            return buf.backdoor_dump_tensor(mapping)
+            return buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         profile_data = self._profile_operation(dump_tensor_operation)
         self._print_profile_table("backdoor_dump_tensor(3x64x64)", profile_data)
