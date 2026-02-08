@@ -13,7 +13,7 @@ import torch
 import numpy as np
 import einops
 from ..core.vector import Vector
-from ..core.int_sequence import IntSequence
+from ..core.logic_sequence import LogicSequence
 from dataclasses import dataclass
 
 
@@ -123,8 +123,8 @@ class TileMapping:
         ...     hw_spat_dim={"h": 8, "w": 8},
         ... )
         >>> tensor = torch.randn(3, 8, 8)
-        >>> values = mapping.to_hw(tensor)
-        >>> tensor_restored = mapping.to_sw(values)
+        >>> values = mapping.to_int_sequence(tensor)
+        >>> tensor_restored = mapping.to_tensor(values)
     """
 
     dtype: torch.dtype
@@ -155,18 +155,18 @@ class TileMapping:
         self.sw_to_hw_formula = f"{self.sw_einops} -> {self.hw_einops}"
         self.hw_to_sw_formula = f"{self.hw_einops} -> {self.sw_einops}"
 
-    def to_hw(self, tensor: torch.Tensor) -> IntSequence:
-        """Convert a software tensor to hardware vector sequence (values only).
+    def to_logic_sequence(self, tensor: torch.Tensor) -> LogicSequence:
+        """Convert a software tensor to a LogicSequence of packed integers.
 
         Transforms the tensor according to the TileMapping and produces
-        an IntSequence of packed integer values, ordered by time step
+        a LogicSequence of packed integer values, ordered by time step
         (index 0 = earliest time step).
 
         Args:
             tensor: Input PyTorch tensor with shape matching sw_einops pattern.
 
         Returns:
-            IntSequence of packed integers, one per temporal unit,
+            LogicSequence of packed integers, one per temporal unit,
             ordered from earliest to latest time step.
 
         Example:
@@ -178,7 +178,7 @@ class TileMapping:
             ...     hw_spat_dim={"h": 32, "w": 32},
             ... )
             >>> tensor = torch.randn(3, 32, 32)
-            >>> values = mapping.to_hw(tensor)
+            >>> values = mapping.to_logic_sequence(tensor)
             >>> # len(values) == 3
         """
         # Rearrange tensor from software layout to hardware vector sequence layout
@@ -190,36 +190,33 @@ class TileMapping:
         )  # [N, M] where N is temporal iterations, M is spatial elements
 
         # Convert each temporal row to packed integer
-        values_list = IntSequence(
-            Vector.from_tensor(tensor_row).to_cocotb() for tensor_row in tensor_seq
-        )
+        return matrix_to_logic_seq(tensor_seq)
 
-        return values_list
+    def to_int_sequence(self, tensor: torch.Tensor) -> LogicSequence:
+        """Alias for to_logic_sequence()."""
+        return self.to_logic_sequence(tensor)
 
-    def to_sw(self, values: IntSequence) -> torch.Tensor:
-        """Convert hardware vector sequence back to software tensor (values only).
+    def to_tensor(self, values: LogicSequence) -> torch.Tensor:
+        """Convert a LogicSequence back to a software tensor.
 
         Takes time-ordered values from hardware and reconstructs the original
         tensor layout according to the TileMapping.
 
         Args:
-            values: IntSequence of packed integers from hardware.
+            values: LogicSequence of packed integers from hardware.
 
         Returns:
             A PyTorch tensor with shape matching sw_einops pattern.
 
         Example:
-            >>> values = mapping.to_hw(tensor)
-            >>> tensor_restored = mapping.to_sw(values)
+            >>> values = mapping.to_logic_sequence(tensor)
+            >>> tensor_restored = mapping.to_tensor(values)
             >>> assert torch.allclose(tensor, tensor_restored)
         """
         # Convert each integer back to tensor row
-        tensor_seq = [
-            Vector.from_cocotb(int_value, self.num, self.dtype).to_tensor()
-            for int_value in values
-        ]
+        tensor_seq = logic_seq_to_matrix(values, self.num, self.dtype)
 
-        # Stack and rearrange from hardware layout to software layout
+        # Rearrange from hardware layout to software layout
         tensor = einops.rearrange(
             tensor_seq,
             self.hw_to_sw_formula,
@@ -230,49 +227,78 @@ class TileMapping:
         return tensor
 
 
-def tensor_to_cocotb_seq(tensor: torch.Tensor, mapping: TileMapping) -> IntSequence:
-    """Convert a tensor to a time-ordered sequence of Cocotb-compatible integer values.
+def matrix_to_logic_seq(matrix_2d: torch.Tensor) -> LogicSequence:
+    """Convert a 2D tensor (matrix) to a LogicSequence of packed integers.
+
+    Low-level shortcut that packs each row of a 2D tensor into a
+    packed integer without any rearrangement (no TileMapping needed).
+
+    Args:
+        matrix_2d: A 2D PyTorch tensor where each row becomes one packed integer.
+
+    Returns:
+        LogicSequence of packed integers, one per row.
+    """
+    return LogicSequence(Vector.from_array(row).to_logic() for row in matrix_2d)
+
+
+def logic_seq_to_matrix(logic_seq: LogicSequence, num: int, dtype) -> torch.Tensor:
+    """Convert a LogicSequence of packed integers to a 2D tensor (matrix).
+
+    Low-level shortcut that unpacks each integer in the sequence into
+    a row of a 2D tensor without any rearrangement (no TileMapping needed).
+
+    Args:
+        logic_seq: LogicSequence of packed integers.
+        num: Number of elements per row.
+        dtype: PyTorch dtype for the resulting tensor elements.
+
+    Returns:
+        A 2D PyTorch tensor with shape (len(logic_seq), num).
+    """
+    rows = [Vector.from_logic(v, num, dtype).to_array() for v in logic_seq]
+    return torch.stack(rows)
+
+
+def array_to_logic_seq(tensor: torch.Tensor, mapping: TileMapping) -> LogicSequence:
+    """Convert a tensor to a time-ordered LogicSequence using a TileMapping.
 
     Uses the TileMapping to rearrange the tensor into a hardware vector
     sequence and pack each row into an integer suitable for HDL interfaces.
-    The resulting sequence is ordered by time step (index 0 = earliest).
 
     Args:
         tensor: Input PyTorch tensor.
         mapping: TileMapping defining the tensor-to-memory transformation.
 
     Returns:
-        IntSequence of integers, one per temporal unit, ready for HDL assignment.
+        LogicSequence of integers, one per temporal unit, ready for HDL assignment.
 
     Example:
         >>> tensor = torch.randn(3, 32, 32)
-        >>> mapping = TileMapping(
-        ...     dtype=torch.float32,
-        ...     sw_einops="c h w",
-        ...     hw_einops="c (h w)",
-        ...     hw_temp_dim={"c": 3},
-        ...     hw_spat_dim={"h": 32, "w": 32},
-        ... )
-        >>> seq = tensor_to_cocotb_seq(tensor, mapping)
+        >>> seq = array_to_logic_seq(tensor, mapping)
     """
-    return mapping.to_hw(tensor)
+    return mapping.to_logic_sequence(tensor)
 
 
-def cocotb_seq_to_tensor(cocotb_seq: IntSequence, mapping: TileMapping) -> torch.Tensor:
-    """Convert a sequence of Cocotb values back to a tensor.
+def logic_seq_to_array(logic_seq: LogicSequence, mapping: TileMapping) -> torch.Tensor:
+    """Convert a LogicSequence back to a tensor using a TileMapping.
 
     Unpacks each integer in the sequence and uses the TileMapping
     to rearrange into the original tensor layout.
 
     Args:
-        cocotb_seq: IntSequence of integers from HDL interface.
+        logic_seq: LogicSequence of integers from HDL interface.
         mapping: TileMapping defining the memory-to-tensor transformation.
 
     Returns:
         PyTorch tensor with the original layout.
 
     Example:
-        >>> result = cocotb_seq_to_tensor(seq, mapping)
-        >>> # result.shape matches original tensor shape
+        >>> result = logic_seq_to_array(seq, mapping)
     """
-    return mapping.to_sw(cocotb_seq)
+    return mapping.to_tensor(logic_seq)
+
+
+# Aliases
+tensor_to_cocotb_seq = array_to_logic_seq
+cocotb_seq_to_tensor = logic_seq_to_array

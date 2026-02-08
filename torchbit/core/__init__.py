@@ -57,5 +57,5 @@ Typical usage in Cocotb tests:
 from .dtype import *
 from .vector import *
 from .vector_sequence import *
-from .int_sequence import *
+from .logic_sequence import *
 from .bit_struct import *

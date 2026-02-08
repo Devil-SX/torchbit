@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-02-08
+
+### Added
+- **Core:** Added `LogicSequence` class (`torchbit/core/logic_sequence.py`) as the canonical typed sequence for packed integer values. `IntSequence` preserved as alias.
+- **Core:** Added canonical `to_logic()`/`from_logic()` methods to `BitStruct` for packing/unpacking field values. `to_int()`/`from_int()`/`to_cocotb()`/`from_cocotb()` preserved as aliases.
+- **Core:** Added canonical `to_logic()`/`from_logic()` (packed integer) and `to_array()`/`from_array()` (1D Tensor) methods to `Vector`. `to_cocotb()`/`from_cocotb()`/`to_int()`/`to_tensor()`/`from_tensor()` preserved as aliases.
+- **Core:** Added `array_to_logic()`/`logic_to_array()` module-level shortcuts. `tensor_to_cocotb()`/`cocotb_to_tensor()` preserved as aliases.
+- **Core:** Added canonical `to_matrix()`/`from_matrix()` (2D Tensor) and `to_logic_sequence()`/`from_logic_sequence()` methods to `VectorSequence`. `to_tensor()`/`from_tensor()`/`to_int_sequence()`/`from_int_sequence()` preserved as aliases.
+- **Tiling:** Added `matrix_to_logic_seq()`/`logic_seq_to_matrix()` low-level shortcuts for direct 2D Matrix ↔ LogicSequence conversion without TileMapping.
+- **Tiling:** Added `array_to_logic_seq()`/`logic_seq_to_array()` high-level shortcuts for Tensor ↔ LogicSequence conversion via TileMapping. `tensor_to_cocotb_seq()`/`cocotb_seq_to_tensor()` preserved as aliases.
+- **Tiling:** Added `to_logic_sequence()` canonical method on `TileMapping`. `to_int_sequence()` preserved as alias.
+- **Docs:** Added `doc/pic/04_sequence.typ` diagram showing Matrix / LogicSequence / VectorSequence conversion relationships.
+- **Docs:** Added "Basic Datatypes" section to README with terminology table, conversion diagrams, and TileMapping pipeline explanation.
+- **Tests:** Added `TestVectorCanonicalNames` test class with 11 tests verifying canonical method equivalence with aliases.
+
+### Changed
+- **Core:** `int_sequence.py` now re-exports from `logic_sequence.py` (canonical implementation moved).
+- **Core:** `__init__.py` imports from `logic_sequence` instead of `int_sequence`.
+- **Tiling:** Internal imports updated from `IntSequence` to `LogicSequence` across `tile_mapping.py`, `address_mapping.py`.
+- **Tools:** Internal imports updated from `IntSequence` to `LogicSequence` across `buffer.py`, `driver.py`, `monitor.py`.
+- **Docs:** Moved all diagram files from `doc/` to `doc/pic/` directory.
+- **Docs:** Updated all 4 diagrams with canonical terminology (Logic/Array/Matrix/LogicSequence).
+- **Docs:** Updated Sphinx API docs (`core.rst`, `tiling.rst`, `tools.rst`) to reference new module structure.
+- **Docs:** Updated `docs/conf.py` version to 2.4.0.
+
 ## [2.3.0] - 2026-02-08
 
 ### Added

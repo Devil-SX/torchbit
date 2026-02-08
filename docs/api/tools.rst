@@ -5,6 +5,7 @@ Verification components for hardware testing.
 ## torchbit.tools.buffer
 
 Memory buffer simulation for SRAM/register file modeling.
+Supports front-door (HDL) and back-door (software) access with LogicSequence.
 
 .. automodule:: torchbit.tools.buffer
    :members:
@@ -13,7 +14,7 @@ Memory buffer simulation for SRAM/register file modeling.
 
 ## torchbit.tools.driver
 
-Driver pattern for driving stimulus into FIFO/Pipeline interfaces.
+Driver pattern for driving LogicSequence stimulus into FIFO/Pipeline interfaces.
 
 .. automodule:: torchbit.tools.driver
    :members:
@@ -22,17 +23,9 @@ Driver pattern for driving stimulus into FIFO/Pipeline interfaces.
 
 ## torchbit.tools.monitor
 
-Monitor patterns for collecting data from FIFO/Pipeline interfaces.
+Monitor patterns for collecting LogicSequence data from FIFO/Pipeline interfaces.
 
 .. automodule:: torchbit.tools.monitor
    :members:
    :undoc-members:
    :show-inheritance:
-
-## torchbit.tools.bit_struct
-
-Bit-level data structure utilities.
-
-.. automodule:: torchbit.tools.bit_struct
-   :members:
-   :undoc-members:

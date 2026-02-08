@@ -15,9 +15,9 @@ copyright = '2025, ShuchengDu'
 author = 'ShuchengDu'
 
 # The short X.Y version
-version = '2.1.0'
+version = '2.4.0'
 # The full version, including alpha/beta/rc tags
-release = '2.1.0'
+release = '2.4.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

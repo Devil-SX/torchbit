@@ -7,7 +7,7 @@ and hardware-compatible formats.
 No DUT is required for this example - it runs as a Python script.
 """
 import torch
-from torchbit.core import Vector, VectorSequence, tensor_to_cocotb, cocotb_to_tensor
+from torchbit.core import Vector, VectorSequence, tensor_to_cocotb, cocotb_to_tensor, array_to_logic, logic_to_array
 
 
 def test_vector_conversions():

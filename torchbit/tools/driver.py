@@ -7,7 +7,7 @@ import cocotb
 from cocotb.triggers import RisingEdge, Event
 from cocotb.utils import get_sim_time
 from .port import InputPort, OutputPort
-from ..core.int_sequence import IntSequence
+from ..core.logic_sequence import LogicSequence
 from typing import List
 
 
@@ -57,7 +57,7 @@ class Driver:
             debug: If True, enable debug logging for each sent value.
         """
         self.debug = debug
-        self.queue: IntSequence = IntSequence()
+        self.queue: LogicSequence = LogicSequence()
         self.timestamps: List[tuple] = []
 
     def connect(self, dut, clk, data, valid, full=None) -> None:
@@ -77,13 +77,13 @@ class Driver:
         self.valid_port = OutputPort(valid)
         self.full_port = InputPort(full) if full is not None else None
 
-    def load(self, sequence: IntSequence) -> None:
+    def load(self, sequence: LogicSequence) -> None:
         """Load a sequence of values to send.
 
         Args:
-            sequence: IntSequence of integer values to send in order.
+            sequence: LogicSequence of integer values to send in order.
         """
-        self.queue = IntSequence(sequence)
+        self.queue = LogicSequence(sequence)
         self.timestamps = []
 
     def dump_time(self) -> List[tuple]:

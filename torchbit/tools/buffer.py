@@ -9,7 +9,7 @@ import cocotb
 from cocotb.triggers import RisingEdge, Timer
 import numpy as np
 from ..core.vector import Vector
-from ..core.int_sequence import IntSequence
+from ..core.logic_sequence import LogicSequence
 from ..core.dtype import dtype_to_bits
 from .port import InputPort, OutputPort
 from ..tiling import TileMapping, AddressMapping
@@ -119,7 +119,7 @@ class Buffer:
         """
         return self.content[addr]
 
-    def backdoor_read(self, addr_list: list[int]) -> IntSequence:
+    def backdoor_read(self, addr_list: list[int]) -> LogicSequence:
         """Read multiple addresses in parallel (backdoor operation).
 
         Direct software-side access to read multiple buffer locations
@@ -136,7 +136,7 @@ class Buffer:
         """
         for addr in addr_list:
             assert 0 <= addr < self.depth, f"Address {addr} out of range [0, {self.depth})"
-        return IntSequence(self.content[addr] for addr in addr_list)
+        return LogicSequence(self.content[addr] for addr in addr_list)
 
     def backdoor_write(self, addr_list: list[int], data_list: list[int]) -> None:
         """Write multiple addresses in parallel (backdoor operation).
@@ -244,10 +244,10 @@ class Buffer:
             addr_mapping: AddressMapping defining address generation.
 
         Note:
-            Uses mapping.to_hw() for values and addr_mapping.get_addr_list()
+            Uses mapping.to_int_sequence() for values and addr_mapping.get_addr_list()
             for addresses, then backdoor_write() for parallel writes.
         """
-        values_list = mapping.to_hw(tensor)
+        values_list = mapping.to_int_sequence(tensor)
         addr_list = addr_mapping.get_addr_list()
         self.backdoor_write(addr_list, values_list)
 
@@ -271,12 +271,12 @@ class Buffer:
 
         Note:
             Uses addr_mapping.get_addr_list() for addresses,
-            backdoor_read() for parallel reads, and mapping.to_sw()
+            backdoor_read() for parallel reads, and mapping.to_tensor()
             to convert hardware format back to tensor.
         """
         addr_list = addr_mapping.get_addr_list()
         values_list = self.backdoor_read(addr_list)
-        return mapping.to_sw(values_list)
+        return mapping.to_tensor(values_list)
 
     def dump_to_tensor(self, mapping: TileMapping, addr_mapping: AddressMapping) -> torch.Tensor:
         """Alias for backdoor_dump_tensor() for backward compatibility."""

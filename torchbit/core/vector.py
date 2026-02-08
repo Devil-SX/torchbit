@@ -73,30 +73,6 @@ class Vector:
         self.tensor = tensor
 
     @staticmethod
-    def from_tensor(tensor: torch.Tensor) -> "Vector":
-        """Create a Vector from a 1D PyTorch tensor.
-
-        This is the primary method for converting tensor data to a Vector
-        for subsequent conversion to HDL-compatible formats.
-
-        Args:
-            tensor: A 1D PyTorch tensor of any supported dtype.
-
-        Returns:
-            A new Vector instance containing the tensor.
-
-        Raises:
-            AssertionError: If tensor has more than 1 dimension.
-
-        Example:
-            >>> import torch
-            >>> from torchbit.core import Vector
-            >>> tensor = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
-            >>> vec = Vector.from_tensor(tensor)
-        """
-        return Vector(tensor)
-
-    @staticmethod
     def from_int(value_int: int, num: int, dtype: torch.dtype) -> "Vector":
         """Create a Vector from an integer value by unpacking.
 
@@ -141,8 +117,8 @@ class Vector:
             return Vector(torch.from_numpy(vec).view(dtype))
 
     @staticmethod
-    def from_cocotb(value: cocotb.types.LogicArray | int, num: int, dtype: torch.dtype) -> "Vector":
-        """Create a Vector from a Cocotb signal value.
+    def from_logic(value: cocotb.types.LogicArray | int, num: int, dtype: torch.dtype) -> "Vector":
+        """Create a Vector from a logic value (LogicArray or int).
 
         Converts HDL signal values (LogicArray or integer) back into a Vector
         for comparison with PyTorch tensors. Handles X/Z states gracefully.
@@ -164,13 +140,12 @@ class Vector:
             a tensor of zeros is returned.
 
         Example:
-            >>> # Inside a cocotb test
-            >>> vec = Vector.from_cocotb(dut.data_out.value, 8, torch.float32)
-            >>> tensor = vec.to_tensor()
+            >>> vec = Vector.from_logic(dut.data_out.value, 8, torch.float32)
+            >>> tensor = vec.to_array()
         """
         assert isinstance(
             value, cocotb.types.LogicArray
-        ) or isinstance(value, int), "value must be a cocotb logicarray value or int value, use Vector.from_cocotb(dut.io_xxx.value)"
+        ) or isinstance(value, int), "value must be a cocotb logicarray value or int value, use Vector.from_logic(dut.io_xxx.value)"
 
         if isinstance(value, cocotb.types.LogicArray) and (("x" in value.binstr) or ("z" in value.binstr)):
             print("Warning: value is a X/Z value, use the zero result")
@@ -179,22 +154,47 @@ class Vector:
         value_int = int(value) if (isinstance(value, cocotb.types.LogicArray) or isinstance(value, cocotb.types.Logic)) else value
         return Vector.from_int(value_int, num, dtype)
 
-    def to_cocotb(self) -> int:
-        """Convert the Vector to a Cocotb-compatible integer value.
+    # Alias
+    from_cocotb = from_logic
+
+    @staticmethod
+    def from_array(tensor: torch.Tensor) -> "Vector":
+        """Create a Vector from a 1D PyTorch tensor (array).
+
+        Alias for from_tensor(). This is the canonical name following
+        the logic/array/matrix terminology.
+
+        Args:
+            tensor: A 1D PyTorch tensor of any supported dtype.
+
+        Returns:
+            A new Vector instance containing the tensor.
+
+        Example:
+            >>> tensor = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+            >>> vec = Vector.from_array(tensor)
+        """
+        return Vector(tensor)
+
+    # Alias
+    from_tensor = from_array
+
+    def to_logic(self) -> int:
+        """Convert the Vector to a packed integer (logic value).
 
         Packs the tensor elements into a single integer suitable for
         driving HDL interfaces. For multi-element tensors, elements are
         packed with the last element at the most significant bits.
 
         Returns:
-            An integer value for Cocotb signal assignment.
+            An integer value for HDL signal assignment.
 
         Raises:
             AssertionError: If tensor has more than 1 dimension or dtype is unsupported.
 
         Example:
-            >>> vec = Vector.from_tensor(torch.tensor([1.0, 2.0], dtype=torch.float32))
-            >>> dut.io_data.value = vec.to_cocotb()
+            >>> vec = Vector.from_array(torch.tensor([1.0, 2.0], dtype=torch.float32))
+            >>> dut.io_data.value = vec.to_logic()
         """
         assert len(self.tensor.shape) <= 1
         assert self.tensor.dtype in dtype_to_bits.keys()
@@ -213,48 +213,59 @@ class Vector:
             result = tensor_numpy.item() & mask
         return result
 
-    def to_tensor(self) -> torch.Tensor:
-        """Get the underlying PyTorch tensor.
+    def to_cocotb(self) -> int:
+        """Alias for to_logic(). Pack the tensor into a single integer."""
+        return self.to_logic()
+
+    def to_int(self) -> int:
+        """Alias for to_logic(). Pack the tensor into a single integer."""
+        return self.to_logic()
+
+    def to_array(self) -> torch.Tensor:
+        """Get the underlying PyTorch tensor (array).
 
         Returns:
             The 1D PyTorch tensor stored in this Vector.
 
         Example:
-            >>> vec = Vector.from_tensor(torch.tensor([1.0, 2.0], dtype=torch.float32))
-            >>> tensor = vec.to_tensor()
+            >>> vec = Vector.from_array(torch.tensor([1.0, 2.0], dtype=torch.float32))
+            >>> tensor = vec.to_array()
+        """
+        return self.tensor
+
+    def to_tensor(self) -> torch.Tensor:
+        """Alias for to_array(). Get the underlying PyTorch tensor.
+
+        Returns:
+            The 1D PyTorch tensor stored in this Vector.
         """
         return self.tensor
 
 
-def tensor_to_cocotb(tensor: torch.Tensor) -> int:
-    """Shortcut function to convert a 1D tensor directly to a Cocotb integer value.
+def array_to_logic(tensor: torch.Tensor) -> int:
+    """Convert a 1D tensor (array) directly to a packed integer (logic value).
 
-    This is a convenience wrapper combining Vector.from_tensor() and to_cocotb().
-    Useful for simple one-off conversions without creating Vector objects.
+    This is a convenience wrapper combining Vector.from_array() and to_logic().
 
     Args:
         tensor: A 1D PyTorch tensor of any supported dtype.
 
     Returns:
-        An integer value for Cocotb signal assignment.
-
-    Raises:
-        AssertionError: If tensor has more than 1 dimension or dtype is unsupported.
+        An integer value for HDL signal assignment.
 
     Example:
         >>> import torch
-        >>> from torchbit.core import tensor_to_cocotb
+        >>> from torchbit.core import array_to_logic
         >>> tensor = torch.tensor([1.5, 2.5], dtype=torch.float32)
-        >>> dut.io_din.value = tensor_to_cocotb(tensor)
+        >>> dut.io_din.value = array_to_logic(tensor)
     """
-    return Vector.from_tensor(tensor).to_cocotb()
+    return Vector.from_array(tensor).to_logic()
 
 
-def cocotb_to_tensor(value: cocotb.types.LogicArray | int, num: int, dtype: torch.dtype) -> torch.Tensor:
-    """Shortcut function to convert a Cocotb value directly to a PyTorch tensor.
+def logic_to_array(value: cocotb.types.LogicArray | int, num: int, dtype: torch.dtype) -> torch.Tensor:
+    """Convert a logic value (LogicArray or int) directly to a 1D tensor (array).
 
-    This is a convenience wrapper combining Vector.from_cocotb() and to_tensor().
-    Useful for simple one-off conversions without creating Vector objects.
+    This is a convenience wrapper combining Vector.from_logic() and to_array().
 
     Args:
         value: Cocotb LogicArray or int value from HDL interface.
@@ -264,11 +275,13 @@ def cocotb_to_tensor(value: cocotb.types.LogicArray | int, num: int, dtype: torc
     Returns:
         A 1D PyTorch tensor with the converted values.
 
-    Raises:
-        AssertionError: If value type is unsupported or dtype is not in dtype_to_bits.
-
     Example:
-        >>> from torchbit.core import cocotb_to_tensor
-        >>> tensor = cocotb_to_tensor(dut.io_dout.value, 8, torch.float32)
+        >>> from torchbit.core import logic_to_array
+        >>> tensor = logic_to_array(dut.io_dout.value, 8, torch.float32)
     """
-    return Vector.from_cocotb(value, num, dtype).to_tensor()
+    return Vector.from_logic(value, num, dtype).to_array()
+
+
+# Aliases
+tensor_to_cocotb = array_to_logic
+cocotb_to_tensor = logic_to_array

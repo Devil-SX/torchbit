@@ -7,7 +7,7 @@ and Cocotb-compatible integer representations.
 import pytest
 import torch
 import numpy as np
-from torchbit.core import Vector, tensor_to_cocotb, cocotb_to_tensor
+from torchbit.core import Vector, tensor_to_cocotb, cocotb_to_tensor, array_to_logic, logic_to_array
 
 
 class TestVectorBasic:
@@ -243,3 +243,78 @@ class TestVectorMasking:
         result = vec.to_tensor()
         # Should unpack correctly with 8-bit masking
         assert result[0].item() == 0xFF
+
+
+class TestVectorCanonicalNames:
+    """Tests for canonical to_logic/from_logic/to_array/from_array methods."""
+
+    def test_to_logic_equals_to_cocotb(self):
+        """Test that to_logic() returns same result as to_cocotb()."""
+        tensor = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+        vec = Vector.from_tensor(tensor)
+        assert vec.to_logic() == vec.to_cocotb()
+
+    def test_to_logic_equals_to_int(self):
+        """Test that to_logic() returns same result as to_int()."""
+        tensor = torch.tensor([0x01, 0x02, 0x03], dtype=torch.uint8)
+        vec = Vector.from_tensor(tensor)
+        assert vec.to_logic() == vec.to_int()
+
+    def test_from_logic_with_int(self):
+        """Test from_logic with integer value."""
+        value = 0x12345678
+        vec = Vector.from_logic(value, 2, torch.int32)
+        result = vec.to_array()
+        assert len(result) == 2
+
+    def test_from_logic_equals_from_cocotb(self):
+        """Test that from_logic() returns same result as from_cocotb()."""
+        value = 0x3f800000
+        vec1 = Vector.from_logic(value, 1, torch.float32)
+        vec2 = Vector.from_cocotb(value, 1, torch.float32)
+        assert torch.equal(vec1.to_array(), vec2.to_tensor())
+
+    def test_to_array_returns_tensor(self):
+        """Test that to_array() returns the underlying tensor."""
+        tensor = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+        vec = Vector(tensor)
+        assert torch.equal(vec.to_array(), tensor)
+
+    def test_to_array_equals_to_tensor(self):
+        """Test that to_array() returns same result as to_tensor()."""
+        tensor = torch.tensor([1.0, 2.0], dtype=torch.float32)
+        vec = Vector(tensor)
+        assert torch.equal(vec.to_array(), vec.to_tensor())
+
+    def test_from_array(self):
+        """Test from_array static method."""
+        tensor = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float32)
+        vec = Vector.from_array(tensor)
+        assert torch.equal(vec.to_array(), tensor)
+
+    def test_from_array_equals_from_tensor(self):
+        """Test that from_array() returns same result as from_tensor()."""
+        tensor = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+        vec1 = Vector.from_array(tensor)
+        vec2 = Vector.from_tensor(tensor)
+        assert torch.equal(vec1.to_array(), vec2.to_tensor())
+
+    def test_roundtrip_logic(self):
+        """Test roundtrip with canonical from_array/to_logic/from_logic/to_array."""
+        tensor = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float32)
+        vec = Vector.from_array(tensor)
+        logic_val = vec.to_logic()
+        vec_back = Vector.from_logic(logic_val, len(tensor), torch.float32)
+        assert torch.allclose(tensor, vec_back.to_array())
+
+    def test_array_to_logic_shortcut(self):
+        """Test array_to_logic module-level shortcut."""
+        tensor = torch.tensor([1.0, 2.0], dtype=torch.float32)
+        assert array_to_logic(tensor) == tensor_to_cocotb(tensor)
+
+    def test_logic_to_array_shortcut(self):
+        """Test logic_to_array module-level shortcut."""
+        value = 0x3f800000
+        t1 = logic_to_array(value, 1, torch.float32)
+        t2 = cocotb_to_tensor(value, 1, torch.float32)
+        assert torch.equal(t1, t2)

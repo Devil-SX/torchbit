@@ -40,52 +40,136 @@ pip install git+https://github.com/Devil-SX/torchbit.git
 | CentOS 7 | 2.0.0 | VCS | ✅ |  |
 
 
-# 哲学
+# 设计哲学
 
 Tensor 的处理主要分为两个关键，对值的处理，以及对形状的处理。对值的处理分为如何将各种 torch 支持的数据格式 float、signed、unsigned、brain-float 映射到 Verilog 的 bits 上。对形状的处理则包括复杂的 Tilling 变换等过程。底层值变换原理参考 [value.md](./doc/zh-CN/value.md)，tilling 设计原理参考 [tilling_schedule.md](./doc/zh-CN/tilling_schedule.md)。
 
-# 基本数据结构
+# 基本数据类型
 
-[Vector](./torchbit/core/vector.py) 是一个专门的 1D Tensor，作为基本数据类型。`Vector` 类充当 PyTorch Tensor 与 Cocotb LogicArrays 或 Verilog 多位接口之间的接口。
+Torchbit 定义了软件侧（PyTorch）和硬件侧（Cocotb/HDL）两套术语，通过转换方法相互连接。
 
-## Tensor -> Cocotb
+## 术语
 
-例如，要将 Tensor `x`（长度 5，`torch.float32`）转换为 Verilog 信号——结果是 5x32=160 位信号——并将其驱动到 160 位宽的接口 `dut.io_din`：
+| | PyTorch（软件侧） | Cocotb / HDL（硬件侧） |
+|---|---|---|
+| **单值** | **Array** — 1D Tensor | **Logic** — 任意信号的打包整数 |
+| | | **Vector** — Array 的封装，对应 SIMD 并行接口 |
+| | | **BitStruct** — 可自定义 field 的接口 |
+| **序列** | **Matrix** — 2D Tensor | **LogicSequence** — Logic 值的序列 |
+| | | **VectorSequence** — Vector 的序列 |
 
-**第一步：将 Tensor 转换为 Vector**
+## Transaction：单值转换
 
-```python
-from torchbit.core import Vector
-x_vec = Vector.from_tensor(x) # x 是一个包含 5 个 torch.float32 元素的 1D tensor
-```
+[Vector](./torchbit/core/vector.py) 是 PyTorch Array 与 HDL Logic 值之间的核心桥梁。`BitStruct` 定义自定义字段布局，同样可以与 Logic 互转。
 
-**第二步：将 Vector 转换为 Cocotb 格式并驱动信号**
+![Transaction](./doc/pic/01_transaction.png)
 
-```python
-dut.io_din.value = x_vec.to_cocotb()
-```
-
-或者，这两步可以合并为一步：
-
-```python
-dut.io_din.value = Vector.from_tensor(x).to_cocotb()
-
-from torchbit.core import tensor_to_cocotb
-dut.io_din.value = tensor_to_cocotb(x) # Vector.from_tensor().to_cocotb() 的封装
-```
-
-## Cocotb -> Tensor
-
-同样，要从 160 位宽的接口 `dut.io_dout` 读取 Tensor `x`（长度 5，`torch.float32`）：
+### Array → Logic（驱动信号）
 
 ```python
-x = Vector.from_cocotb(dut.io_dout.value, 5, torch.float32).to_tensor()
+from torchbit.core import Vector, array_to_logic
 
-from torchbit.core import cocotb_to_tensor
-x = cocotb_to_tensor(dut.io_dout.value, 5, torch.float32) # Vector.from_cocotb().to_tensor() 的封装
+x = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], dtype=torch.float32)
+
+# 分步操作
+vec = Vector.from_array(x)          # Array → Vector
+dut.io_din.value = vec.to_logic()   # Vector → Logic
+
+# 一行快捷方式
+dut.io_din.value = array_to_logic(x)
 ```
 
-本教程涵盖了基本的 Tensor 转换接口。您可以完全按照 [cocotb](https://docs.cocotb.org/en/stable/writing_testbenches.html) 风格编写测试平台，将此库纯粹用作值转换工具。
+### Logic → Array（读取信号）
+
+```python
+from torchbit.core import Vector, logic_to_array
+
+# 分步操作
+vec = Vector.from_logic(dut.io_dout.value, 5, torch.float32)
+x = vec.to_array()                   # Logic → Vector → Array
+
+# 一行快捷方式
+x = logic_to_array(dut.io_dout.value, 5, torch.float32)
+```
+
+> **向后兼容：** `from_tensor`/`to_tensor`、`from_cocotb`/`to_cocotb`、`to_int`、`tensor_to_cocotb`/`cocotb_to_tensor` 均保留为别名。
+
+## Sequence：批量值转换
+
+对于多值序列（例如多个时钟周期），`VectorSequence` 在 PyTorch 2D Matrix 与 HDL LogicSequence 之间桥接。
+
+![Sequence](./doc/pic/04_sequence.png)
+
+```python
+from torchbit.core import VectorSequence
+
+matrix = torch.randn(256, 4)                     # 2D Matrix
+vs = VectorSequence.from_matrix(matrix)           # Matrix → VectorSequence
+logic_seq = vs.to_logic_sequence()                # VectorSequence → LogicSequence
+restored = VectorSequence.from_logic_sequence(logic_seq, 4, torch.float32)
+```
+
+> **向后兼容：** `from_tensor`/`to_tensor`、`to_int_sequence`/`from_int_sequence` 均保留为别名。
+
+## Tensor ↔ LogicSequence：通过 TileMapping 转换
+
+在实际硬件中，高维 Tensor（如 `c h w`）需要被重排和序列化为按时间排列的打包值序列进行传输。`TileMapping` 端到端地处理这一过程：
+
+```
+Tensor  ──rearrange──►  Matrix (2D)  ──pack rows──►  LogicSequence
+ (c h w)     einops       (c, h*w)      Vector          [int, ...]
+```
+
+转换分为两个阶段：
+
+1. **Rearrange**（形状）：`einops.rearrange` 将 Tensor 重排为 2D Matrix，每行代表一个时钟周期的数据（空间维度），行数等于时钟周期数（时间维度）。
+2. **Pack**（值）：Matrix 的每一行通过 `Vector` 打包为一个整数，生成 `LogicSequence`。
+
+```python
+from torchbit.tiling import TileMapping, array_to_logic_seq, logic_seq_to_array
+
+mapping = TileMapping(
+    dtype=torch.float32,
+    sw_einops="c h w",
+    hw_einops="c (h w)",
+    hw_temp_dim={"c": 3},
+    hw_spat_dim={"h": 32, "w": 32},
+)
+
+tensor = torch.randn(3, 32, 32)
+
+# Tensor → LogicSequence（高级快捷方式）
+seq = array_to_logic_seq(tensor, mapping)
+
+# LogicSequence → Tensor
+restored = logic_seq_to_array(seq, mapping)
+assert torch.allclose(tensor, restored)
+```
+
+也可以使用低级快捷方式，无需 TileMapping，直接操作 2D Matrix：
+
+```python
+from torchbit.tiling import matrix_to_logic_seq, logic_seq_to_matrix
+
+matrix = torch.randn(256, 4)
+seq = matrix_to_logic_seq(matrix)                            # Matrix → LogicSequence
+restored = logic_seq_to_matrix(seq, 4, torch.float32)        # LogicSequence → Matrix
+```
+
+> **向后兼容：** `tensor_to_cocotb_seq`/`cocotb_seq_to_tensor` 保留为 `array_to_logic_seq`/`logic_seq_to_array` 的别名。
+
+## 工具概览
+
+![Driver & Monitor](./doc/pic/02_driver_monitor.png)
+
+- **Driver**：通过前门（data + valid）信号将 `LogicSequence` 送入 DUT。
+- **PoolMonitor / FIFOMonitor**：通过前门信号将 DUT 输出收集为 `LogicSequence`。
+
+![Buffer](./doc/pic/03_buffer.png)
+
+- **Buffer**：同时支持前门（HDL）和后门（软件）访问的存储模型。
+- **TileMapping**：将 Tensor 重排为 Matrix，再打包为 `LogicSequence`。
+- **AddressMapping**：为后门存储访问生成地址序列。
 
 # 使用内置运行器在 Verilator/VCS 上运行
 

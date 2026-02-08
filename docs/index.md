@@ -6,8 +6,8 @@ Utilities for deep learning accelerator development with Cocotb verification.
 
 **torchbit** provides Python utilities for hardware verification and deep learning accelerator development:
 
-- **Core**: Tensor/vector conversion between PyTorch and HDL formats
-- **Tiling**: Tensor-to-memory mapping with spatial/temporal dimensions
+- **Core**: Value conversion between PyTorch (Array/Matrix) and HDL (Logic/LogicSequence) formats
+- **Tiling**: Tensor-to-LogicSequence mapping via TileMapping with einops rearrangement
 - **Runner**: Simulator management (Verilator, VCS)
 - **Tools**: Verification components (Buffer, Driver/Monitor)
 - **Debug**: Waveform analysis tools

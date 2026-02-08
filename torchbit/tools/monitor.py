@@ -9,7 +9,7 @@ from cocotb.triggers import RisingEdge, Event
 from cocotb.utils import get_sim_time
 from cocotb.handle import Immediate
 from .port import InputPort, OutputPort
-from ..core.int_sequence import IntSequence
+from ..core.logic_sequence import LogicSequence
 from typing import List
 
 
@@ -27,7 +27,7 @@ class PoolMonitor:
 
     Attributes:
         debug (bool): Enable debug logging.
-        data (IntSequence): Collected data values.
+        data (LogicSequence): Collected data values.
         timestamps (list): Simulation timestamps when data was captured.
 
     Example:
@@ -52,7 +52,7 @@ class PoolMonitor:
             debug: If True, enable debug logging for each captured value.
         """
         self.debug = debug
-        self.data: IntSequence = IntSequence()
+        self.data: LogicSequence = LogicSequence()
         self.timestamps: List[tuple] = []
 
     def connect(self, dut, clk, data, valid) -> None:
@@ -97,11 +97,11 @@ class PoolMonitor:
                 if self.debug:
                     self.dut._log.info(f"[Monitor] Collected {val} at {t}")
 
-    def dump(self) -> IntSequence:
+    def dump(self) -> LogicSequence:
         """Get all collected data values.
 
         Returns:
-            IntSequence of captured data values in order.
+            LogicSequence of captured data values in order.
         """
         return self.data
 
@@ -149,7 +149,7 @@ class FIFOMonitor:
         """
         self.debug = debug
         print(f"[FIFOMonitor] Initialized {debug=}")
-        self.data: IntSequence = IntSequence()
+        self.data: LogicSequence = LogicSequence()
         self.timestamps: List[tuple] = []
 
     def connect(self, dut, clk, data, empty, ready, valid=None) -> None:
@@ -222,11 +222,11 @@ class FIFOMonitor:
 
         # Cleanup: No ready_port to set to 0.
 
-    def dump(self) -> IntSequence:
+    def dump(self) -> LogicSequence:
         """Get all collected data values.
 
         Returns:
-            IntSequence of captured data values in order.
+            LogicSequence of captured data values in order.
         """
         return self.data
 

@@ -6,7 +6,7 @@ addresses from multi-dimensional coordinates using stride calculations.
 """
 import numpy as np
 import einops
-from ..core.int_sequence import IntSequence
+from ..core.logic_sequence import LogicSequence
 
 
 class AddressMapping:
@@ -79,7 +79,7 @@ class AddressMapping:
         self.hw_temp_stride = {k: hw_temp_stride[k] for k in dim_names}
         self.base = base
 
-    def get_addr_list(self) -> IntSequence:
+    def get_addr_list(self) -> LogicSequence:
         """Generate addresses for all coordinate combinations.
 
         Computes the linear address for every possible combination of
@@ -97,7 +97,7 @@ class AddressMapping:
         indexs = np.stack(indexs)  # [N, M]
         strides_arr = np.array(strides)  # [M]
         addrs = einops.reduce(indexs * strides_arr, "n m -> n", "sum") + self.base  # [N]
-        return IntSequence(addrs.tolist())
+        return LogicSequence(addrs.tolist())
 
 
 class ContiguousAddressMapping(AddressMapping):

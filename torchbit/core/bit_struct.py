@@ -143,7 +143,7 @@ def BitStruct(fields: List[BitField], lsb_first: bool = True):
             # Directly set __dict__ to avoid triggering __setattr__
             self.__dict__.update(state)
 
-        def from_int(self, value: int) -> None:
+        def from_logic(self, value: int) -> None:
             """Parse an integer value into the struct fields.
 
             Args:
@@ -158,7 +158,15 @@ def BitStruct(fields: List[BitField], lsb_first: bool = True):
                 field.set_value(field_value)
                 shift += field.width
 
-        def to_int(self) -> int:
+        def from_int(self, value: int) -> None:
+            """Alias for from_logic(). Parse an integer into the struct fields."""
+            self.from_logic(value)
+
+        def from_cocotb(self, value: int) -> None:
+            """Alias for from_logic(). Parse an integer into the struct fields."""
+            self.from_logic(value)
+
+        def to_logic(self) -> int:
             """Pack all field values into a single integer.
 
             Returns:
@@ -172,6 +180,14 @@ def BitStruct(fields: List[BitField], lsb_first: bool = True):
                 result |= (field.value & ((1 << field.width) - 1)) << shift
                 shift += field.width
             return result
+
+        def to_int(self) -> int:
+            """Alias for to_logic(). Pack all fields into a single integer."""
+            return self.to_logic()
+
+        def to_cocotb(self) -> int:
+            """Alias for to_logic(). Pack all fields into a single integer."""
+            return self.to_logic()
 
         def inspect(self) -> None:
             """Print a formatted table of all fields and their values.

@@ -44,48 +44,132 @@ The main branch is currently maintained for environments using `cocotb >= 2.x`, 
 
 Tensor processing involves two key aspects: value processing and shape processing. Value processing deals with mapping various torch-supported data formats (float, signed, unsigned, brain-float) to Verilog bits. Shape processing includes complex Tilling transformations and other processes. For underlying value transformation principles, refer to [value.md](./doc/en/value.md). For tilling design principles, refer to [tilling_schedule.md](./doc/en/tilling_schedule.md).
 
-# Basic Data Structure
+# Basic Datatypes
 
-[Vector](./torchbit/core/vector.py) is a specialized 1D Tensor and serves as the fundamental data type. The `Vector` class acts as the interface between PyTorch Tensors and Cocotb LogicArrays or Verilog multi-bit interfaces. 
+Torchbit defines two sets of terminology for the software side (PyTorch) and the hardware side (Cocotb/HDL), connected by conversion methods.
 
-## Tensor -> Cocotb
+## Terminology
 
-For example, to convert a Tensor `x` (length 5, `torch.float32`) into a Verilog signal—resulting in a 5x32=160-bit signal—and drive it into a 160-bit wide interface `dut.io_din`:
+| | PyTorch (Software) | Cocotb / HDL (Hardware) |
+|---|---|---|
+| **Single** | **Array** — 1D Tensor | **Logic** — packed integer for any signal |
+| | | **Vector** — Array wrapper, SIMD parallel interface |
+| | | **BitStruct** — field-defined interface |
+| **Sequence** | **Matrix** — 2D Tensor | **LogicSequence** — sequence of Logic values |
+| | | **VectorSequence** — sequence of Vectors |
 
-**First Step: Convert Tensor to Vector**
+## Transaction: Single Value Conversion
 
-```python
-from torchbit.core import Vector
-x_vec = Vector.from_tensor(x) # x is a 1D-tensor with 5 torch.float32 elements
-```
+[Vector](./torchbit/core/vector.py) is the core bridge between PyTorch Arrays and HDL Logic values. `BitStruct` defines custom field layouts that also convert to/from Logic.
 
-**Second Step: Convert Vector to Cocotb format and drive the signal**
+![Transaction](./doc/pic/01_transaction.png)
 
-```python
-dut.io_din.value = x_vec.to_cocotb()
-```
-
-Alternatively, this process can be combined into a single step:
-
-```python
-dut.io_din.value = Vector.from_tensor(x).to_cocotb()
-
-from torchbit.core import tensor_to_cocotb
-dut.io_din.value = tensor_to_cocotb(x) # wrapper of Vector.from_tensor().to_cocotb()
-```
-
-## Cocotb -> Tensor
-
-Similarly, to read a Tensor `x` (length 5, `torch.float32`) from a 160-bit wide interface `dut.io_dout`:
+### Array → Logic (drive a signal)
 
 ```python
-x = Vector.from_cocotb(dut.io_dout.value, 5, torch.float32).to_tensor()
+from torchbit.core import Vector, array_to_logic
 
-from torchbit.core import cocotb_to_tensor
-x = cocotb_to_tensor(dut.io_dout.value, 5, torch.float32) # wrapper of Vector.from_cocotb().to_tensor()
+x = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], dtype=torch.float32)
+
+# Step by step
+vec = Vector.from_array(x)          # Array → Vector
+dut.io_din.value = vec.to_logic()   # Vector → Logic
+
+# One-liner shortcut
+dut.io_din.value = array_to_logic(x)
 ```
 
-This tutorial covers the essential Tensor conversion interfaces. You can write your testbench entirely in the [cocotb](https://docs.cocotb.org/en/stable/writing_testbenches.html) style, using this library purely as a value conversion tool.
+### Logic → Array (read a signal)
+
+```python
+from torchbit.core import Vector, logic_to_array
+
+# Step by step
+vec = Vector.from_logic(dut.io_dout.value, 5, torch.float32)
+x = vec.to_array()                   # Logic → Vector → Array
+
+# One-liner shortcut
+x = logic_to_array(dut.io_dout.value, 5, torch.float32)
+```
+
+> **Backward compatibility:** `from_tensor`/`to_tensor`, `from_cocotb`/`to_cocotb`, `to_int`, `tensor_to_cocotb`/`cocotb_to_tensor` are all preserved as aliases.
+
+## Sequence: Batch Value Conversion
+
+For sequences of values (e.g., multiple clock cycles), `VectorSequence` bridges PyTorch 2D Matrices and HDL LogicSequences.
+
+![Sequence](./doc/pic/04_sequence.png)
+
+```python
+from torchbit.core import VectorSequence
+
+matrix = torch.randn(256, 4)                     # 2D Matrix
+vs = VectorSequence.from_matrix(matrix)           # Matrix → VectorSequence
+logic_seq = vs.to_logic_sequence()                # VectorSequence → LogicSequence
+restored = VectorSequence.from_logic_sequence(logic_seq, 4, torch.float32)
+```
+
+> **Backward compatibility:** `from_tensor`/`to_tensor`, `to_int_sequence`/`from_int_sequence` are preserved as aliases.
+
+## Tensor ↔ LogicSequence via TileMapping
+
+In real hardware, a high-dimensional Tensor (e.g., `c h w`) needs to be reshaped and serialized into a time-ordered sequence of packed values for transmission. `TileMapping` handles this end-to-end:
+
+```
+Tensor  ──rearrange──►  Matrix (2D)  ──pack rows──►  LogicSequence
+ (c h w)     einops       (c, h*w)      Vector          [int, ...]
+```
+
+The conversion decomposes into two stages:
+
+1. **Rearrange** (shape): `einops.rearrange` reshapes the Tensor into a 2D Matrix, where each row represents one clock cycle's data (spatial dimension) and the number of rows equals the number of clock cycles (temporal dimension).
+2. **Pack** (value): Each row of the Matrix is packed into a single integer via `Vector`, producing a `LogicSequence`.
+
+```python
+from torchbit.tiling import TileMapping, array_to_logic_seq, logic_seq_to_array
+
+mapping = TileMapping(
+    dtype=torch.float32,
+    sw_einops="c h w",
+    hw_einops="c (h w)",
+    hw_temp_dim={"c": 3},
+    hw_spat_dim={"h": 32, "w": 32},
+)
+
+tensor = torch.randn(3, 32, 32)
+
+# Tensor → LogicSequence (high-level shortcut)
+seq = array_to_logic_seq(tensor, mapping)
+
+# LogicSequence → Tensor
+restored = logic_seq_to_array(seq, mapping)
+assert torch.allclose(tensor, restored)
+```
+
+You can also use the low-level shortcuts without a TileMapping, operating directly on a 2D Matrix:
+
+```python
+from torchbit.tiling import matrix_to_logic_seq, logic_seq_to_matrix
+
+matrix = torch.randn(256, 4)
+seq = matrix_to_logic_seq(matrix)                            # Matrix → LogicSequence
+restored = logic_seq_to_matrix(seq, 4, torch.float32)        # LogicSequence → Matrix
+```
+
+> **Backward compatibility:** `tensor_to_cocotb_seq`/`cocotb_seq_to_tensor` are preserved as aliases for `array_to_logic_seq`/`logic_seq_to_array`.
+
+## Tools Overview
+
+![Driver & Monitor](./doc/pic/02_driver_monitor.png)
+
+- **Driver**: Feeds a `LogicSequence` into DUT via front-door (data + valid) signals.
+- **PoolMonitor / FIFOMonitor**: Collects DUT output into a `LogicSequence` via front-door signals.
+
+![Buffer](./doc/pic/03_buffer.png)
+
+- **Buffer**: Memory model with both front-door (HDL) and back-door (software) access.
+- **TileMapping**: Rearranges a Tensor into a Matrix, then packs into a `LogicSequence`.
+- **AddressMapping**: Generates address sequences for back-door memory access.
 
 # Running with Verilator/VCS Using Built-in Runner
 
@@ -136,7 +220,7 @@ if __name__ == "__main__":
 
 ```
 
-Then, simply run `python top_test.py`. After execution, a `sim_xx` folder will be generated under `output_dir`. Inside this directory, you will find the compiled files and corresponding waveforms. If using Verilator, the waveform file is `dump.fst`; if using VCS, it is `dump.fsdb`. 
+Then, simply run `python top_test.py`. After execution, a `sim_xx` folder will be generated under `output_dir`. Inside this directory, you will find the compiled files and corresponding waveforms. If using Verilator, the waveform file is `dump.fst`; if using VCS, it is `dump.fsdb`.
 
 The `.fsdb` file stores the runtime database. You can view the corresponding source code directly by running `verdi -ssf dump.fsdb`.
 

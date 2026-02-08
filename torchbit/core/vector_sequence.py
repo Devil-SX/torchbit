@@ -157,27 +157,6 @@ class VectorSequence:
         self.tensor = tensor
 
     @staticmethod
-    def from_tensor(tensor: torch.Tensor) -> "VectorSequence":
-        """Create a VectorSequence from a 2D PyTorch tensor.
-
-        Args:
-            tensor: A 2D PyTorch tensor of any supported dtype.
-
-        Returns:
-            A new VectorSequence instance containing the tensor.
-
-        Raises:
-            AssertionError: If tensor does not have exactly 2 dimensions.
-
-        Example:
-            >>> import torch
-            >>> from torchbit.core import VectorSequence
-            >>> tensor = torch.randn(256, 4)
-            >>> vs = VectorSequence.from_tensor(tensor)
-        """
-        return VectorSequence(tensor)
-
-    @staticmethod
     def from_memhexfile(in_path: str | Path, dtype: torch.dtype, endianess: str = "little") -> "VectorSequence":
         """Create a VectorSequence by reading a memory hex file.
 
@@ -348,17 +327,80 @@ class VectorSequence:
                 byte_row = to_bytes(tensor_row, endianess)
                 f.write(byte_row)
 
-    def to_tensor(self) -> torch.Tensor:
-        """Get the underlying PyTorch tensor.
+    def to_logic_sequence(self):
+        """Convert each row to a packed integer via Vector, returning a LogicSequence.
+
+        Returns:
+            LogicSequence where each element is the packed integer of one row.
+        """
+        from .logic_sequence import LogicSequence
+        from .vector import Vector
+        return LogicSequence(Vector.from_array(row).to_logic() for row in self.tensor)
+
+    def to_int_sequence(self):
+        """Alias for to_logic_sequence()."""
+        return self.to_logic_sequence()
+
+    @staticmethod
+    def from_logic_sequence(logic_seq, num: int, dtype: torch.dtype) -> "VectorSequence":
+        """Create a VectorSequence from a LogicSequence via Vector.
+
+        Args:
+            logic_seq: LogicSequence (or list of ints) to convert.
+            num: Number of elements per row.
+            dtype: PyTorch dtype for tensor elements.
+
+        Returns:
+            A new VectorSequence instance.
+        """
+        from .vector import Vector
+        rows = [Vector.from_logic(v, num, dtype).to_array() for v in logic_seq]
+        return VectorSequence(torch.stack(rows))
+
+    # Alias
+    from_int_sequence = from_logic_sequence
+
+    def to_matrix(self) -> torch.Tensor:
+        """Get the underlying PyTorch tensor (matrix).
 
         Returns:
             The 2D PyTorch tensor stored in this VectorSequence.
 
         Example:
             >>> vs = VectorSequence.from_tensor(torch.randn(256, 4))
-            >>> tensor = vs.to_tensor()
+            >>> tensor = vs.to_matrix()
         """
         return self.tensor
+
+    def to_tensor(self) -> torch.Tensor:
+        """Alias for to_matrix(). Get the underlying PyTorch tensor.
+
+        Returns:
+            The 2D PyTorch tensor stored in this VectorSequence.
+        """
+        return self.tensor
+
+    @staticmethod
+    def from_matrix(tensor: torch.Tensor) -> "VectorSequence":
+        """Create a VectorSequence from a 2D PyTorch tensor (matrix).
+
+        Alias for from_tensor(). This is the canonical name following
+        the logic/array/matrix terminology.
+
+        Args:
+            tensor: A 2D PyTorch tensor of any supported dtype.
+
+        Returns:
+            A new VectorSequence instance containing the tensor.
+
+        Example:
+            >>> tensor = torch.randn(256, 4)
+            >>> vs = VectorSequence.from_matrix(tensor)
+        """
+        return VectorSequence(tensor)
+
+    # Alias
+    from_tensor = from_matrix
 
 
 # Backward compatibility alias

@@ -9,7 +9,15 @@ This module provides functionality for:
 
 from .pad_utils import get_padlen, pad, depad, depad_like
 from .address_mapping import AddressMapping, ContiguousAddressMapping
-from .tile_mapping import TileMapping, tensor_to_cocotb_seq, cocotb_seq_to_tensor
+from .tile_mapping import (
+    TileMapping,
+    matrix_to_logic_seq,
+    logic_seq_to_matrix,
+    array_to_logic_seq,
+    logic_seq_to_array,
+    tensor_to_cocotb_seq,
+    cocotb_seq_to_tensor,
+)
 
 __all__ = [
     # pad_utils
@@ -22,6 +30,10 @@ __all__ = [
     "ContiguousAddressMapping",
     # tile_mapping
     "TileMapping",
+    "matrix_to_logic_seq",
+    "logic_seq_to_matrix",
+    "array_to_logic_seq",
+    "logic_seq_to_array",
     "tensor_to_cocotb_seq",
     "cocotb_seq_to_tensor",
 ]
