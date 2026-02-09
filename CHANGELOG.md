@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-02-09
+
+### Added
+- **Package:** Added `__version__` attribute to `torchbit` package, read from `pyproject.toml` via `importlib.metadata`.
+- **Runner:** Added `-f` / `-F` nested filelist support to `read_filelist()`, following EDA command-file conventions (VCS, Xcelium, Verilator, Questa).
+- **Runner:** Added `//` comment syntax support in filelist parsing (in addition to existing `#` comments).
+- **Runner:** Added silent skipping of known EDA directives (`+incdir+`, `+define+`, `+libext+`, `-v`, `-y`, `-sv`, `-timescale`) in filelist parsing.
+
 ## [2.4.0] - 2026-02-08
 
 ### Added

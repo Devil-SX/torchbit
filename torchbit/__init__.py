@@ -1,3 +1,7 @@
+from importlib.metadata import version as _version
+
+__version__ = _version("torchbit")
+
 import cocotb
 from packaging import version
 
