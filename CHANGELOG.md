@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Docs:** Added version and cloc language badges (Python, Markdown, SystemVerilog) to both `README.md` and `README.zh-CN.md`.
+- **Docs:** Centered Chinese/English language switch links using HTML `<p align="center">`.
+
 ## [2.4.1] - 2026-02-09
 
 ### Added

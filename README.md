@@ -1,6 +1,15 @@
 <h1 align="center">Torchbit</h1>
 
-[English](./README.md) | [简体中文](./README.zh-CN.md)
+<p align="center">
+  <img src="https://img.shields.io/badge/version-2.4.1-blue" alt="version">
+  <img src="https://img.shields.io/badge/Python-3725_lines-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Markdown-214_lines-083fa1" alt="Markdown">
+  <img src="https://img.shields.io/badge/SystemVerilog-18_lines-dc382c" alt="SystemVerilog">
+</p>
+
+<p align="center">
+  <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
 
 Torchbit provides utilities for deep learning accelerator verification, facilitating the conversion of PyTorch tensors into Cocotb-compatible formats.
 
