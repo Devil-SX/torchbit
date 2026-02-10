@@ -1,0 +1,33 @@
+{
+  "name": "torchbit",
+  "owner": {
+    "name": "ShuchengDu",
+    "email": "shuchengdu@ust.hk"
+  },
+  "plugins": [
+    {
+      "name": "torchbit",
+      "source": "./",
+      "description": "Torchbit: Utilities for deep learning accelerator development, including testbench reporting, data conversion, and tiling tools",
+      "version": "2.4.2",
+      "author": {
+        "name": "ShuchengDu",
+        "email": "shuchengdu@ust.hk"
+      },
+      "homepage": "https://github.com/Devil-SX/torchbit",
+      "repository": "https://github.com/Devil-SX/torchbit",
+      "license": "MIT",
+      "keywords": [
+        "deep-learning",
+        "accelerator",
+        "cocotb",
+        "torchbit",
+        "testbench",
+        "verification"
+      ],
+      "category": "development",
+      "strict": false,
+      "skills": "./skills/"
+    }
+  ]
+}

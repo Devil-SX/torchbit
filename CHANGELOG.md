@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.2] - 2026-02-10
+
 ### Added
+- **Plugin:** Added Claude Code plugin marketplace configuration (`.claude-plugin/marketplace.json`) for plugin distribution.
+- **Skills:** Added `report_testbench` skill for generating testbench architecture reports with ASCII art diagrams, stimulus framework descriptions, and test data documentation.
 - **Docs:** Added version and cloc language badges (Python, Markdown, SystemVerilog) to both `README.md` and `README.zh-CN.md`.
 - **Docs:** Centered Chinese/English language switch links using HTML `<p align="center">`.
 
