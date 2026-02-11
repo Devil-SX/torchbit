@@ -1,7 +1,7 @@
 """
 Data Conversion Example - Entry Point
 
-This script demonstrates Vector and Matrix classes for converting
+This script demonstrates Vector and VectorSequence classes for converting
 between PyTorch tensors and hardware-compatible formats.
 
 No DUT is required - this is a pure Python example.
@@ -24,7 +24,7 @@ def main():
     print()
     print("This example demonstrates:")
     print("  - Vector class: 1D tensor <-> integer conversion")
-    print("  - Matrix class: 2D tensor <-> file conversion")
+    print("  - VectorSequence class: 2D tensor <-> file conversion")
     print("  - Support for multiple dtypes")
     print("  - Roundtrip verification")
     print()

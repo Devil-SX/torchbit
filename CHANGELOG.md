@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-02-11
+
+### Added
+- **Examples:** Added `07_uvm_basics` example demonstrating BFM, VectorItem, LogicSequenceItem, Scoreboard, Driver/Monitor, Agent, Env/Test (pure Python, no sim) (#16).
+- **Examples:** Added `08_uvm_advanced` example demonstrating ComponentRegistry, CoveragePoint/CoverageGroup, RegisterModel/RegisterBlock (pure Python, no sim) (#17).
+
+### Changed
+- **Examples:** Fixed broken API calls in `02_data_convert` for v3.0 canonical names: `from_array`/`to_logic`/`from_logic`/`to_array`/`from_matrix`/`array_to_logic`/`logic_to_array` (#14).
+- **Examples:** Fixed broken API calls in `06_tile_mapping` wrapper and tests: `backdoor_load_tensor`/`from_logic`/`to_array` (#14).
+- **Examples:** Updated stale comments in `05_buffer` to use canonical method names (#14).
+- **Examples:** Simplified `06_tile_mapping` from nested testbench structure to flat structure matching other examples (#15).
+- **Examples:** Updated `examples/README.md` with all 8 examples and canonical class names (#14).
+
 ## [3.1.0] - 2026-02-11
 
 ### Added
