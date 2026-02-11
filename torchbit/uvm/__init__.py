@@ -12,3 +12,6 @@ from .seq_items import VectorItem, LogicSequenceItem
 from .driver import TorchbitDriver
 from .monitor import TorchbitMonitor
 from .agent import TorchbitAgent
+from .scoreboard import TorchbitScoreboard
+from .env import TorchbitEnv
+from .test import TorchbitTest

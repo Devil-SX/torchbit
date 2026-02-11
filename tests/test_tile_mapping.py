@@ -8,11 +8,10 @@ import torch
 import numpy as np
 from torchbit.tiling import (
     TileMapping, AddressMapping, ContiguousAddressMapping,
-    tensor_to_cocotb_seq, cocotb_seq_to_tensor,
     array_to_logic_seq, logic_seq_to_array,
     matrix_to_logic_seq, logic_seq_to_matrix,
 )
-from torchbit.core.logic_sequence import LogicSequence, IntSequence
+from torchbit.core.logic_sequence import LogicSequence
 
 
 class TestAddressMapping:
@@ -144,8 +143,8 @@ class TestContiguousAddressMapping:
         )
         assert isinstance(contiguous, AddressMapping)
 
-    def test_contiguous_returns_int_sequence(self):
-        """Test that get_addr_list returns IntSequence."""
+    def test_contiguous_returns_logic_sequence(self):
+        """Test that get_addr_list returns LogicSequence."""
         contiguous = ContiguousAddressMapping(
             base=0,
             hw_temp_einops="row col",
@@ -217,8 +216,8 @@ class TestTileMapping:
         )
 
         # Convert tensor using the mapping
-        seq = tensor_to_cocotb_seq(tensor, mapping)
-        recovered = cocotb_seq_to_tensor(seq, mapping)
+        seq = array_to_logic_seq(tensor, mapping)
+        recovered = logic_seq_to_array(seq, mapping)
 
         # Verify roundtrip
         assert torch.equal(tensor, recovered)
@@ -238,8 +237,8 @@ class TestTileMapping:
         )
 
         # Convert and recover
-        seq = tensor_to_cocotb_seq(tensor, mapping)
-        recovered = cocotb_seq_to_tensor(seq, mapping)
+        seq = array_to_logic_seq(tensor, mapping)
+        recovered = logic_seq_to_array(seq, mapping)
 
         # Verify roundtrip
         assert torch.equal(tensor, recovered)
@@ -321,7 +320,7 @@ class TestTileMapping:
         )
 
         # to_hw: convert tensor to values only
-        values = mapping.to_int_sequence(tensor)
+        values = mapping.to_logic_sequence(tensor)
         assert len(values) == 3
         assert isinstance(values, LogicSequence)
 
@@ -345,8 +344,8 @@ class TestTileMapping:
                 hw_spat_dim={"h": 8, "w": 8},
             )
 
-    def test_tile_mapping_to_hw_returns_int_sequence(self):
-        """Test that to_int_sequence() returns IntSequence type."""
+    def test_tile_mapping_to_hw_returns_logic_sequence(self):
+        """Test that to_logic_sequence() returns LogicSequence type."""
         mapping = TileMapping(
             dtype=torch.float32,
             sw_einops="c h w",
@@ -356,6 +355,6 @@ class TestTileMapping:
         )
 
         tensor = torch.randn(3, 8, 8)
-        values = mapping.to_int_sequence(tensor)
+        values = mapping.to_logic_sequence(tensor)
         assert isinstance(values, LogicSequence)
         assert len(values) == 3

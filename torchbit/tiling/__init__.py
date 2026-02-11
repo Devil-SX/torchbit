@@ -15,8 +15,6 @@ from .tile_mapping import (
     logic_seq_to_matrix,
     array_to_logic_seq,
     logic_seq_to_array,
-    tensor_to_cocotb_seq,
-    cocotb_seq_to_tensor,
 )
 
 __all__ = [
@@ -34,6 +32,4 @@ __all__ = [
     "logic_seq_to_matrix",
     "array_to_logic_seq",
     "logic_seq_to_array",
-    "tensor_to_cocotb_seq",
-    "cocotb_seq_to_tensor",
 ]

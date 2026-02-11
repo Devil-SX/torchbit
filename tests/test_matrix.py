@@ -35,17 +35,17 @@ class TestVectorSequenceBasic:
         with pytest.raises(AssertionError):
             VectorSequence(tensor)
 
-    def test_from_tensor(self):
-        """Test VectorSequence.from_tensor() static method."""
+    def test_from_matrix(self):
+        """Test VectorSequence.from_matrix() static method."""
         tensor = torch.randn(4, 4, dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
         assert torch.equal(vs.tensor, tensor)
 
-    def test_to_tensor(self):
-        """Test VectorSequence.to_tensor() returns the underlying tensor."""
+    def test_to_matrix(self):
+        """Test VectorSequence.to_matrix() returns the underlying tensor."""
         tensor = torch.randn(4, 4, dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
-        assert torch.equal(vs.to_tensor(), tensor)
+        vs = VectorSequence.from_matrix(tensor)
+        assert torch.equal(vs.to_matrix(), tensor)
 
 
 class TestVectorSequenceMemhexFile:
@@ -54,7 +54,7 @@ class TestVectorSequenceMemhexFile:
     def test_to_memhexfile_basic(self, tmp_path):
         """Test writing VectorSequence to memory hex file."""
         tensor = torch.tensor([[1.0, 2.0], [3.0, 4.0]], dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         output_path = tmp_path / "output.hex"
         vs.to_memhexfile(output_path)
@@ -79,7 +79,7 @@ class TestVectorSequenceMemhexFile:
     def test_memhexfile_roundtrip(self, tmp_path):
         """Test roundtrip: write then read memhex file."""
         original = torch.randn(8, 4, dtype=torch.float32)
-        vs_original = VectorSequence.from_tensor(original)
+        vs_original = VectorSequence.from_matrix(original)
 
         hex_path = tmp_path / "roundtrip.hex"
         vs_original.to_memhexfile(hex_path)
@@ -90,7 +90,7 @@ class TestVectorSequenceMemhexFile:
     def test_to_memhexfile_creates_directories(self, tmp_path):
         """Test that to_memhexfile creates parent directories."""
         tensor = torch.tensor([[1.0]], dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         output_path = tmp_path / "subdir" / "nested" / "output.hex"
         vs.to_memhexfile(output_path)
@@ -111,7 +111,7 @@ class TestVectorSequenceMemhexFile:
     def test_to_memhexfile_big_endian(self, tmp_path):
         """Test writing memhex file with big-endian byte order."""
         tensor = torch.tensor([[1.0], [2.0]], dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         output_path = tmp_path / "output_be.hex"
         vs.to_memhexfile(output_path, endianess="big")
@@ -129,7 +129,7 @@ class TestVectorSequenceBinaryFile:
     def test_to_binfile_basic(self, tmp_path):
         """Test writing VectorSequence to binary file."""
         tensor = torch.tensor([[1.0, 2.0], [3.0, 4.0]], dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         output_path = tmp_path / "output.bin"
         vs.to_binfile(output_path)
@@ -152,7 +152,7 @@ class TestVectorSequenceBinaryFile:
     def test_binfile_roundtrip(self, tmp_path):
         """Test roundtrip: write then read binary file."""
         original = torch.randn(8, 4, dtype=torch.float32)
-        vs_original = VectorSequence.from_tensor(original)
+        vs_original = VectorSequence.from_matrix(original)
 
         bin_path = tmp_path / "roundtrip.bin"
         vs_original.to_binfile(bin_path)
@@ -163,7 +163,7 @@ class TestVectorSequenceBinaryFile:
     def test_from_binfile_creates_directories(self, tmp_path):
         """Test that to_binfile creates parent directories."""
         tensor = torch.tensor([[1.0]], dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         output_path = tmp_path / "subdir" / "output.bin"
         vs.to_binfile(output_path)
@@ -183,7 +183,7 @@ class TestVectorSequenceBinaryFile:
     def test_to_binfile_big_endian(self, tmp_path):
         """Test writing binary file with big-endian byte order."""
         tensor = torch.tensor([[1.0]], dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         output_path = tmp_path / "output_be.bin"
         vs.to_binfile(output_path, endianess="big")
@@ -210,7 +210,7 @@ class TestVectorSequenceDtypes:
         else:
             tensor = torch.randn(4, 4, dtype=dtype)
 
-        vs_original = VectorSequence.from_tensor(tensor)
+        vs_original = VectorSequence.from_matrix(tensor)
         hex_path = tmp_path / "test.hex"
         vs_original.to_memhexfile(hex_path)
 
@@ -230,7 +230,7 @@ class TestVectorSequenceDtypes:
         else:
             tensor = torch.randn(4, 8, dtype=dtype)
 
-        vs_original = VectorSequence.from_tensor(tensor)
+        vs_original = VectorSequence.from_matrix(tensor)
         bin_path = tmp_path / "test.bin"
         vs_original.to_binfile(bin_path)
 
@@ -254,7 +254,7 @@ class TestVectorSequenceEdgeCases:
     def test_single_row_vector_sequence(self, tmp_path):
         """Test VectorSequence with single row."""
         tensor = torch.tensor([[1.0, 2.0, 3.0, 4.0]], dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         hex_path = tmp_path / "single_row.hex"
         vs.to_memhexfile(hex_path)
@@ -265,7 +265,7 @@ class TestVectorSequenceEdgeCases:
     def test_single_column_vector_sequence(self, tmp_path):
         """Test VectorSequence with single column."""
         tensor = torch.tensor([[1.0], [2.0], [3.0], [4.0]], dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         hex_path = tmp_path / "single_col.hex"
         vs.to_memhexfile(hex_path)
@@ -276,7 +276,7 @@ class TestVectorSequenceEdgeCases:
     def test_large_vector_sequence(self, tmp_path):
         """Test VectorSequence with large dimensions."""
         tensor = torch.randn(256, 4, dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         hex_path = tmp_path / "large.hex"
         vs.to_memhexfile(hex_path)
@@ -287,7 +287,7 @@ class TestVectorSequenceEdgeCases:
     def test_zero_values(self, tmp_path):
         """Test VectorSequence with all zero values."""
         tensor = torch.zeros((4, 4), dtype=torch.float32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         hex_path = tmp_path / "zeros.hex"
         vs.to_memhexfile(hex_path)
@@ -298,7 +298,7 @@ class TestVectorSequenceEdgeCases:
     def test_negative_values_int(self, tmp_path):
         """Test VectorSequence with negative integer values."""
         tensor = torch.tensor([[-1, -2], [-3, -4]], dtype=torch.int32)
-        vs = VectorSequence.from_tensor(tensor)
+        vs = VectorSequence.from_matrix(tensor)
 
         hex_path = tmp_path / "negative.hex"
         vs.to_memhexfile(hex_path)
@@ -396,20 +396,3 @@ class TestVectorSequenceHelperFunctions:
         arr = np.array([[1, 2], [3, 4]], dtype=np.int32)
         with pytest.raises(AssertionError):
             to_bytes(arr, endianess="little")
-
-
-class TestBackwardCompatibility:
-    """Tests that Matrix alias still works for backward compatibility."""
-
-    def test_matrix_alias_exists(self):
-        """Test that Matrix is available as a subclass alias."""
-        from torchbit.core import Matrix
-        assert issubclass(Matrix, VectorSequence)
-
-    def test_matrix_alias_works(self):
-        """Test that Matrix alias creates VectorSequence instances."""
-        from torchbit.core import Matrix
-        tensor = torch.randn(4, 4, dtype=torch.float32)
-        mat = Matrix.from_tensor(tensor)
-        assert isinstance(mat, VectorSequence)
-        assert torch.equal(mat.tensor, tensor)

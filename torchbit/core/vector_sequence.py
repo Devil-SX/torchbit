@@ -125,7 +125,7 @@ class VectorSequence:
         >>>
         >>> # Create from tensor
         >>> tensor = torch.randn(256, 4)
-        >>> vs = VectorSequence.from_tensor(tensor)
+        >>> vs = VectorSequence.from_matrix(tensor)
 
     Typical usage in Cocotb tests:
         >>> @cocotb.test
@@ -335,16 +335,6 @@ class VectorSequence:
         from .vector import Vector
         return LogicSequence(Vector.from_array(row).to_logic() for row in self.tensor)
 
-    def to_int_sequence(self):
-        """Deprecated alias for to_logic_sequence()."""
-        import warnings
-        warnings.warn(
-            "VectorSequence.to_int_sequence() is deprecated, use VectorSequence.to_logic_sequence() instead. "
-            "Will be removed in v3.0.0.",
-            DeprecationWarning, stacklevel=2,
-        )
-        return self.to_logic_sequence()
-
     @staticmethod
     def from_logic_sequence(logic_seq, num: int, dtype: torch.dtype) -> "VectorSequence":
         """Create a VectorSequence from a LogicSequence via Vector.
@@ -361,17 +351,6 @@ class VectorSequence:
         rows = [Vector.from_logic(v, num, dtype).to_array() for v in logic_seq]
         return VectorSequence(torch.stack(rows))
 
-    @staticmethod
-    def from_int_sequence(logic_seq, num: int, dtype: torch.dtype) -> "VectorSequence":
-        """Deprecated alias for from_logic_sequence()."""
-        import warnings
-        warnings.warn(
-            "VectorSequence.from_int_sequence() is deprecated, use VectorSequence.from_logic_sequence() instead. "
-            "Will be removed in v3.0.0.",
-            DeprecationWarning, stacklevel=2,
-        )
-        return VectorSequence.from_logic_sequence(logic_seq, num, dtype)
-
     def to_matrix(self) -> torch.Tensor:
         """Get the underlying PyTorch tensor (matrix).
 
@@ -379,27 +358,14 @@ class VectorSequence:
             The 2D PyTorch tensor stored in this VectorSequence.
 
         Example:
-            >>> vs = VectorSequence.from_tensor(torch.randn(256, 4))
+            >>> vs = VectorSequence.from_matrix(torch.randn(256, 4))
             >>> tensor = vs.to_matrix()
         """
         return self.tensor
 
-    def to_tensor(self) -> torch.Tensor:
-        """Deprecated alias for to_matrix()."""
-        import warnings
-        warnings.warn(
-            "VectorSequence.to_tensor() is deprecated, use VectorSequence.to_matrix() instead. "
-            "Will be removed in v3.0.0.",
-            DeprecationWarning, stacklevel=2,
-        )
-        return self.to_matrix()
-
     @staticmethod
     def from_matrix(tensor: torch.Tensor) -> "VectorSequence":
         """Create a VectorSequence from a 2D PyTorch tensor (matrix).
-
-        Alias for from_tensor(). This is the canonical name following
-        the logic/array/matrix terminology.
 
         Args:
             tensor: A 2D PyTorch tensor of any supported dtype.
@@ -413,35 +379,3 @@ class VectorSequence:
         """
         return VectorSequence(tensor)
 
-    @staticmethod
-    def from_tensor(tensor: torch.Tensor) -> "VectorSequence":
-        """Deprecated alias for from_matrix()."""
-        import warnings
-        warnings.warn(
-            "VectorSequence.from_tensor() is deprecated, use VectorSequence.from_matrix() instead. "
-            "Will be removed in v3.0.0.",
-            DeprecationWarning, stacklevel=2,
-        )
-        return VectorSequence.from_matrix(tensor)
-
-
-# Backward compatibility alias
-class Matrix(VectorSequence):
-    """Deprecated alias for VectorSequence."""
-    def __init_subclass__(cls, **kwargs):
-        import warnings
-        warnings.warn(
-            "Matrix is deprecated, use VectorSequence instead. "
-            "Will be removed in v3.0.0.",
-            DeprecationWarning, stacklevel=2,
-        )
-        super().__init_subclass__(**kwargs)
-
-    def __init__(self, *args, **kwargs):
-        import warnings
-        warnings.warn(
-            "Matrix is deprecated, use VectorSequence instead. "
-            "Will be removed in v3.0.0.",
-            DeprecationWarning, stacklevel=2,
-        )
-        super().__init__(*args, **kwargs)

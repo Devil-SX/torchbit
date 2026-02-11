@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-02-11
+
+### Added
+- **UVM:** Added `TorchbitScoreboard` for expected vs actual comparison with match/mismatch tracking and reporting (#10).
+- **UVM:** Added `TorchbitEnv` and `create_uvm_env()` factory for assembling agents + scoreboard (#10).
+- **UVM:** Added `TorchbitTest` and `create_uvm_test()` factory for UVM test orchestration (#10).
+- **Tests:** Added `test_uvm_env.py` with 11 tests for scoreboard, env, and test components.
+
+### Removed
+- **BREAKING:** Removed all deprecated backward-compatibility aliases (#3):
+  - `Vector`: `from_cocotb()`, `from_tensor()`, `to_cocotb()`, `to_int()`, `to_tensor()`
+  - `VectorSequence`: `from_tensor()`, `to_tensor()`, `from_int_sequence()`, `to_int_sequence()`
+  - `Matrix` class (use `VectorSequence`)
+  - `IntSequence` class (use `LogicSequence`)
+  - `int_sequence.py` module (use `logic_sequence.py`)
+  - `TileMapping.to_int_sequence()` (use `to_logic_sequence()`)
+  - `tensor_to_cocotb()` / `cocotb_to_tensor()` (use `array_to_logic()` / `logic_to_array()`)
+  - `tensor_to_cocotb_seq()` / `cocotb_seq_to_tensor()` (use `array_to_logic_seq()` / `logic_seq_to_array()`)
+  - `Buffer.init_from_matrix()` / `dump_to_matrix()` / `init_from_tensor()` / `dump_to_tensor()`
+
 ## [2.6.0] - 2026-02-11
 
 ### Added

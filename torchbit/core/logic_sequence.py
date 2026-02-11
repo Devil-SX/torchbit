@@ -14,7 +14,7 @@ class LogicSequence(list):
     determined by context, e.g. the Buffer width or TileMapping dtype).
 
     Typical sources:
-    - ``TileMapping.to_int_sequence(tensor)`` — tile a tensor into a
+    - ``TileMapping.to_logic_sequence(tensor)`` — tile a tensor into a
       LogicSequence for loading into a Buffer.
     - ``Buffer.backdoor_read(addr_list)`` — read multiple addresses.
     - ``Monitor.dump()`` — collected data from a Cocotb monitor.
@@ -36,16 +36,3 @@ class LogicSequence(list):
         4
     """
     pass
-
-
-# Backward compatibility alias
-class IntSequence(LogicSequence):
-    """Deprecated alias for LogicSequence."""
-    def __init__(self, *args, **kwargs):
-        import warnings
-        warnings.warn(
-            "IntSequence is deprecated, use LogicSequence instead. "
-            "Will be removed in v3.0.0.",
-            DeprecationWarning, stacklevel=2,
-        )
-        super().__init__(*args, **kwargs)

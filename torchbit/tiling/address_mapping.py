@@ -87,7 +87,7 @@ class AddressMapping:
         hw_temp_einops ordering (first dim = outermost loop).
 
         Returns:
-            IntSequence of addresses, one for each coordinate combination.
+            LogicSequence of addresses, one for each coordinate combination.
             Length equals product of all dimension sizes.
         """
         max_values = tuple(self.hw_temp_dim[k] for k in self._dim_names)

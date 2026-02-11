@@ -47,10 +47,10 @@ class TestBufferTilingBasic:
         assert buf.read(1) == 0
 
 
-class TestBufferInitFromTensor:
-    """Tests for TwoPortBuffer.init_from_tensor() method."""
+class TestBufferBackdoorLoadTensor:
+    """Tests for TwoPortBuffer.backdoor_load_tensor() method."""
 
-    def test_init_from_tensor_basic(self, buffer_128x512):
+    def test_backdoor_load_tensor_basic(self, buffer_128x512):
         """Test basic tensor initialization via TileMapping."""
         buf = buffer_128x512
 
@@ -75,9 +75,9 @@ class TestBufferInitFromTensor:
         )
 
         # Initialize buffer from tensor
-        buf.init_from_tensor(tensor, mapping, addr_mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
 
-    def test_init_from_tensor_with_base_addr(self, buffer_128x512):
+    def test_backdoor_load_tensor_with_base_addr(self, buffer_128x512):
         """Test tensor initialization with non-zero base address."""
         buf = buffer_128x512
 
@@ -99,13 +99,13 @@ class TestBufferInitFromTensor:
             hw_temp_stride={"c": 1},
         )
 
-        buf.init_from_tensor(tensor, mapping, addr_mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
 
         # Read from the base address
         value = buf.read(0x100)
         assert value != 0  # Should have written something
 
-    def test_init_from_tensor_with_strides(self, buffer_128x512):
+    def test_backdoor_load_tensor_with_strides(self, buffer_128x512):
         """Test tensor initialization with address strides."""
         buf = buffer_128x512
 
@@ -127,7 +127,7 @@ class TestBufferInitFromTensor:
             hw_temp_stride={"c": 16},  # Each channel 16 addresses apart
         )
 
-        buf.init_from_tensor(tensor, mapping, addr_mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
 
         # Verify data is at strided locations
         assert buf.read(0) != 0
@@ -135,10 +135,10 @@ class TestBufferInitFromTensor:
         assert buf.read(32) != 0
 
 
-class TestBufferDumpToTensor:
-    """Tests for TwoPortBuffer.dump_to_tensor() method."""
+class TestBufferBackdoorDumpTensor:
+    """Tests for TwoPortBuffer.backdoor_dump_tensor() method."""
 
-    def test_dump_to_tensor_basic(self, buffer_128x512):
+    def test_backdoor_dump_tensor_basic(self, buffer_128x512):
         """Test dumping buffer contents back to tensor."""
         buf = buffer_128x512
 
@@ -161,15 +161,15 @@ class TestBufferDumpToTensor:
             hw_temp_stride={"c": 1},
         )
 
-        buf.init_from_tensor(original, mapping, addr_mapping)
+        buf.backdoor_load_tensor(original, mapping, addr_mapping)
 
         # Dump back to tensor
-        recovered = buf.dump_to_tensor(mapping, addr_mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         # Verify equality
         assert torch.equal(original, recovered)
 
-    def test_dump_to_tensor_with_base_addr(self, buffer_128x512):
+    def test_backdoor_dump_tensor_with_base_addr(self, buffer_128x512):
         """Test dumping with non-zero base address."""
         buf = buffer_128x512
 
@@ -191,8 +191,8 @@ class TestBufferDumpToTensor:
             hw_temp_stride={"c": 1},
         )
 
-        buf.init_from_tensor(original, mapping, addr_mapping)
-        recovered = buf.dump_to_tensor(mapping, addr_mapping)
+        buf.backdoor_load_tensor(original, mapping, addr_mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         assert torch.equal(original, recovered)
 
@@ -223,8 +223,8 @@ class TestBufferRoundtrip:
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping, addr_mapping)
-        recovered = buf.dump_to_tensor(mapping, addr_mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -251,8 +251,8 @@ class TestBufferRoundtrip:
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping, addr_mapping)
-        recovered = buf.dump_to_tensor(mapping, addr_mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -279,8 +279,8 @@ class TestBufferRoundtrip:
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping, addr_mapping)
-        recovered = buf.dump_to_tensor(mapping, addr_mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -307,8 +307,8 @@ class TestBufferRoundtrip:
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping, addr_mapping)
-        recovered = buf.dump_to_tensor(mapping, addr_mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -339,8 +339,8 @@ class TestBufferMultipleDtypes:
         )
 
         # Roundtrip
-        buf.init_from_tensor(tensor, mapping, addr_mapping)
-        recovered = buf.dump_to_tensor(mapping, addr_mapping)
+        buf.backdoor_load_tensor(tensor, mapping, addr_mapping)
+        recovered = buf.backdoor_dump_tensor(mapping, addr_mapping)
 
         assert torch.equal(tensor, recovered)
 
@@ -348,8 +348,8 @@ class TestBufferMultipleDtypes:
 class TestBufferMatrixOperations:
     """Tests for Buffer's matrix-based operations."""
 
-    def test_init_and_dump_matrix(self, buffer_128x512):
-        """Test init_from_matrix and dump_to_matrix methods."""
+    def test_backdoor_load_and_dump_matrix(self, buffer_128x512):
+        """Test backdoor_load_matrix and backdoor_dump_matrix methods."""
         buf = buffer_128x512
 
         # Create a matrix (2D tensor)
@@ -358,10 +358,10 @@ class TestBufferMatrixOperations:
         matrix = torch.randn(16, 4, dtype=torch.float32)
 
         # Initialize from matrix
-        buf.init_from_matrix(0, 16, matrix)
+        buf.backdoor_load_matrix(0, 16, matrix)
 
         # Dump back to matrix
-        recovered = buf.dump_to_matrix(0, 16, torch.float32)
+        recovered = buf.backdoor_dump_matrix(0, 16, torch.float32)
 
         # Verify
         assert torch.equal(matrix, recovered)
@@ -374,10 +374,10 @@ class TestBufferMatrixOperations:
         matrix = torch.randn(8, 4, dtype=torch.float32)
 
         # Initialize at offset
-        buf.init_from_matrix(100, 108, matrix)
+        buf.backdoor_load_matrix(100, 108, matrix)
 
         # Dump from same offset
-        recovered = buf.dump_to_matrix(100, 108, torch.float32)
+        recovered = buf.backdoor_dump_matrix(100, 108, torch.float32)
 
         assert torch.equal(matrix, recovered)
 

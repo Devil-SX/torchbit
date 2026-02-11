@@ -123,7 +123,7 @@ class TileMapping:
         ...     hw_spat_dim={"h": 8, "w": 8},
         ... )
         >>> tensor = torch.randn(3, 8, 8)
-        >>> values = mapping.to_int_sequence(tensor)
+        >>> values = mapping.to_logic_sequence(tensor)
         >>> tensor_restored = mapping.to_tensor(values)
     """
 
@@ -191,16 +191,6 @@ class TileMapping:
 
         # Convert each temporal row to packed integer
         return matrix_to_logic_seq(tensor_seq)
-
-    def to_int_sequence(self, tensor: torch.Tensor) -> LogicSequence:
-        """Deprecated alias for to_logic_sequence()."""
-        import warnings
-        warnings.warn(
-            "TileMapping.to_int_sequence() is deprecated, use TileMapping.to_logic_sequence() instead. "
-            "Will be removed in v3.0.0.",
-            DeprecationWarning, stacklevel=2,
-        )
-        return self.to_logic_sequence(tensor)
 
     def to_tensor(self, values: LogicSequence) -> torch.Tensor:
         """Convert a LogicSequence back to a software tensor.
@@ -303,25 +293,3 @@ def logic_seq_to_array(logic_seq: LogicSequence, mapping: TileMapping) -> torch.
         >>> result = logic_seq_to_array(seq, mapping)
     """
     return mapping.to_tensor(logic_seq)
-
-
-def tensor_to_cocotb_seq(tensor: torch.Tensor, mapping: TileMapping) -> LogicSequence:
-    """Deprecated alias for array_to_logic_seq()."""
-    import warnings
-    warnings.warn(
-        "tensor_to_cocotb_seq() is deprecated, use array_to_logic_seq() instead. "
-        "Will be removed in v3.0.0.",
-        DeprecationWarning, stacklevel=2,
-    )
-    return array_to_logic_seq(tensor, mapping)
-
-
-def cocotb_seq_to_tensor(logic_seq: LogicSequence, mapping: TileMapping) -> torch.Tensor:
-    """Deprecated alias for logic_seq_to_array()."""
-    import warnings
-    warnings.warn(
-        "cocotb_seq_to_tensor() is deprecated, use logic_seq_to_array() instead. "
-        "Will be removed in v3.0.0.",
-        DeprecationWarning, stacklevel=2,
-    )
-    return logic_seq_to_array(logic_seq, mapping)

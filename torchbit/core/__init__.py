@@ -18,7 +18,7 @@ This module provides the fundamental building blocks for hardware verification:
    - Maps PyTorch/numpy dtypes to bit widths
    - Provides standard dtype conversions for bit-level operations
 
-4. IntSequence: Typed integer sequence for hardware verification data
+4. LogicSequence: Typed integer sequence for hardware verification data
 
 5. BitStruct/BitField: Bit-level struct manipulation
    - Creates structured views of integer values
@@ -35,11 +35,11 @@ Example:
     >>>
     >>> # 1D tensor conversion
     >>> tensor = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
-    >>> vec = Vector.from_tensor(tensor)
-    >>> cocotb_value = vec.to_cocotb()
+    >>> vec = Vector.from_array(tensor)
+    >>> logic_value = vec.to_logic()
     >>>
     >>> # 2D tensor for memory files
-    >>> vs = VectorSequence.from_tensor(torch.randn(256, 4))
+    >>> vs = VectorSequence.from_matrix(torch.randn(256, 4))
     >>> vs.to_memhexfile("memory.hex")
     >>> vs_loaded = VectorSequence.from_memhexfile("memory.hex", torch.float32)
 
@@ -48,11 +48,11 @@ Typical usage in Cocotb tests:
     >>> async def test_dut(dut):
     >>>     # Drive input from tensor
     >>>     tensor = torch.tensor([1.5, 2.5], dtype=torch.float32)
-    >>>     dut.data_in.value = tensor_to_cocotb(tensor)
+    >>>     dut.data_in.value = array_to_logic(tensor)
     >>>
     >>>     # Read output to tensor
     >>>     await RisingEdge(dut.clk)
-    >>>     result = cocotb_to_tensor(dut.data_out.value, 8, torch.float32)
+    >>>     result = logic_to_array(dut.data_out.value, 8, torch.float32)
 """
 from .dtype import *
 from .vector import *
