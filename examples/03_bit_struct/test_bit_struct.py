@@ -47,7 +47,6 @@ def test_bit_struct_creation():
     print()
 
     InstructionStruct = BitStruct(
-        "InstructionStruct",
         [
             BitField("opcode", 7),
             BitField("rd", 5),
@@ -62,7 +61,7 @@ def test_bit_struct_creation():
     inst_value = 0x00F50513  # addi x10, x10, 0
     inst = InstructionStruct.from_int(inst_value)
     print(f"  Instruction: 0x{inst_value:08X}")
-    print(f"  opcode: 0x{inst.opjective:X}")
+    print(f"  opcode: 0x{inst.opcode:X}")
     print(f"  rd: x{inst.rd}")
     print(f"  rs1: x{inst.rs1}")
     print(f"  rs2: x{inst.rs2}")
@@ -83,7 +82,6 @@ def test_bit_struct_creation():
     print()
 
     ControlStruct = BitStruct(
-        "ControlStruct",
         [
             BitField("enable", 1),
             BitField("mode", 2),
@@ -123,7 +121,6 @@ def test_bit_struct_field_ordering():
     # Test LSB-first ordering (default)
     print("LSB-first ordering (fields start from bit 0):")
     LSBStruct = BitStruct(
-        "LSBStruct",
         [
             BitField("field_a", 4),  # bits 3:0
             BitField("field_b", 4),  # bits 7:4
@@ -155,7 +152,6 @@ def test_bit_struct_inspect():
     print()
 
     TestStruct = BitStruct(
-        "TestStruct",
         [
             BitField("a", 4),
             BitField("b", 8),
@@ -178,7 +174,6 @@ def test_bit_struct_comparison():
     print()
 
     TestStruct = BitStruct(
-        "TestStruct",
         [
             BitField("field1", 8),
             BitField("field2", 8),
@@ -205,7 +200,6 @@ def test_bit_struct_comparison():
 
     # Test type mismatch
     OtherStruct = BitStruct(
-        "OtherStruct",
         [
             BitField("x", 8),
             BitField("y", 8),
@@ -260,7 +254,6 @@ def test_practical_examples():
     # Example 1: CPU Status Register
     print("Example 1: CPU Status Register")
     StatusStruct = BitStruct(
-        "StatusStruct",
         [
             BitField("carry", 1),
             BitField("overflow", 1),
@@ -283,7 +276,6 @@ def test_practical_examples():
     # Example 2: Memory-mapped I/O register
     print("Example 2: GPIO Direction Register (16 bits)")
     GPIOStruct = BitStruct(
-        "GPIOStruct",
         [BitField(f"pin{i}", 1) for i in range(16)]
     )
 
