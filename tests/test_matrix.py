@@ -402,9 +402,9 @@ class TestBackwardCompatibility:
     """Tests that Matrix alias still works for backward compatibility."""
 
     def test_matrix_alias_exists(self):
-        """Test that Matrix is available as an alias."""
+        """Test that Matrix is available as a subclass alias."""
         from torchbit.core import Matrix
-        assert Matrix is VectorSequence
+        assert issubclass(Matrix, VectorSequence)
 
     def test_matrix_alias_works(self):
         """Test that Matrix alias creates VectorSequence instances."""

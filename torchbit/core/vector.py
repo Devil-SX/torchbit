@@ -172,8 +172,16 @@ class Vector:
         value_int = int(value) if (isinstance(value, cocotb.types.LogicArray) or isinstance(value, cocotb.types.Logic)) else value
         return Vector.from_int(value_int, num, dtype)
 
-    # Alias
-    from_cocotb = from_logic
+    @staticmethod
+    def from_cocotb(value, num: int, dtype: torch.dtype) -> "Vector":
+        """Deprecated alias for from_logic()."""
+        import warnings
+        warnings.warn(
+            "Vector.from_cocotb() is deprecated, use Vector.from_logic() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        return Vector.from_logic(value, num, dtype)
 
     @staticmethod
     def from_array(tensor: torch.Tensor) -> "Vector":
@@ -194,8 +202,16 @@ class Vector:
         """
         return Vector(tensor)
 
-    # Alias
-    from_tensor = from_array
+    @staticmethod
+    def from_tensor(tensor: torch.Tensor) -> "Vector":
+        """Deprecated alias for from_array()."""
+        import warnings
+        warnings.warn(
+            "Vector.from_tensor() is deprecated, use Vector.from_array() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        return Vector.from_array(tensor)
 
     def to_logic(self) -> int:
         """Convert the Vector to a packed integer (logic value).
@@ -232,11 +248,23 @@ class Vector:
         return result
 
     def to_cocotb(self) -> int:
-        """Alias for to_logic(). Pack the tensor into a single integer."""
+        """Deprecated alias for to_logic()."""
+        import warnings
+        warnings.warn(
+            "Vector.to_cocotb() is deprecated, use Vector.to_logic() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
         return self.to_logic()
 
     def to_int(self) -> int:
-        """Alias for to_logic(). Pack the tensor into a single integer."""
+        """Deprecated alias for to_logic()."""
+        import warnings
+        warnings.warn(
+            "Vector.to_int() is deprecated, use Vector.to_logic() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
         return self.to_logic()
 
     def to_array(self) -> torch.Tensor:
@@ -252,12 +280,14 @@ class Vector:
         return self.tensor
 
     def to_tensor(self) -> torch.Tensor:
-        """Alias for to_array(). Get the underlying PyTorch tensor.
-
-        Returns:
-            The 1D PyTorch tensor stored in this Vector.
-        """
-        return self.tensor
+        """Deprecated alias for to_array()."""
+        import warnings
+        warnings.warn(
+            "Vector.to_tensor() is deprecated, use Vector.to_array() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        return self.to_array()
 
 
 def array_to_logic(tensor: torch.Tensor) -> int:
@@ -300,6 +330,23 @@ def logic_to_array(value, num: int, dtype: torch.dtype) -> torch.Tensor:
     return Vector.from_logic(value, num, dtype).to_array()
 
 
-# Aliases
-tensor_to_cocotb = array_to_logic
-cocotb_to_tensor = logic_to_array
+def tensor_to_cocotb(tensor: torch.Tensor) -> int:
+    """Deprecated alias for array_to_logic()."""
+    import warnings
+    warnings.warn(
+        "tensor_to_cocotb() is deprecated, use array_to_logic() instead. "
+        "Will be removed in v3.0.0.",
+        DeprecationWarning, stacklevel=2,
+    )
+    return array_to_logic(tensor)
+
+
+def cocotb_to_tensor(value, num: int, dtype: torch.dtype) -> torch.Tensor:
+    """Deprecated alias for logic_to_array()."""
+    import warnings
+    warnings.warn(
+        "cocotb_to_tensor() is deprecated, use logic_to_array() instead. "
+        "Will be removed in v3.0.0.",
+        DeprecationWarning, stacklevel=2,
+    )
+    return logic_to_array(value, num, dtype)

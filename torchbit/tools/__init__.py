@@ -84,6 +84,7 @@ from .driver import *
 from .monitor import *
 from .strategy import *
 from .fifo import *
+from .component_db import *
 
 # Re-export tiling module for backward compatibility
 from ..tiling import *

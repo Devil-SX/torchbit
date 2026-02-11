@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchbit"
-version = "2.5.0"
+version = "2.6.0"
 description = "utils for deep learning accelerator developing"
 readme = "README.md"
 requires-python = ">=3.6"
@@ -34,6 +34,7 @@ include-package-data = true
 
 [project.optional-dependencies]
 cocotb = ["cocotb>=2.0.0"]
+uvm = ["pyuvm>=4.0.0"]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",

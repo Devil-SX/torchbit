@@ -182,12 +182,18 @@ class Buffer:
         # [addr_start, addr_end)
         assert len(matrix.size()) == 2
         for i in range(addr_start, addr_end):
-            self.content[i] = Vector.from_tensor(matrix[i - addr_start]).to_cocotb() & (
+            self.content[i] = Vector.from_array(matrix[i - addr_start]).to_logic() & (
                 (1 << self.width) - 1
             )
 
     def init_from_matrix(self, addr_start: int, addr_end: int, matrix: torch.Tensor) -> None:
         """Alias for backdoor_load_matrix() for backward compatibility."""
+        import warnings
+        warnings.warn(
+            "init_from_matrix() is deprecated, use backdoor_load_matrix() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
         return self.backdoor_load_matrix(addr_start, addr_end, matrix)
 
     def backdoor_dump_matrix(self, addr_start: int, addr_end: int, dtype: torch.dtype) -> torch.Tensor:
@@ -221,12 +227,18 @@ class Buffer:
             content_tensor.append(
                 Vector.from_int(
                     value_int=data, num=self.width // num_bit, dtype=dtype
-                ).to_tensor()
+                ).to_array()
             )
         return torch.stack(content_tensor, dim=0)
 
     def dump_to_matrix(self, addr_start: int, addr_end: int, dtype: torch.dtype) -> torch.Tensor:
         """Alias for backdoor_dump_matrix() for backward compatibility."""
+        import warnings
+        warnings.warn(
+            "dump_to_matrix() is deprecated, use backdoor_dump_matrix() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
         return self.backdoor_dump_matrix(addr_start, addr_end, dtype)
 
     def backdoor_load_tensor(self, tensor: torch.Tensor, mapping: TileMapping, addr_mapping: AddressMapping) -> None:
@@ -242,15 +254,21 @@ class Buffer:
             addr_mapping: AddressMapping defining address generation.
 
         Note:
-            Uses mapping.to_int_sequence() for values and addr_mapping.get_addr_list()
+            Uses mapping.to_logic_sequence() for values and addr_mapping.get_addr_list()
             for addresses, then backdoor_write() for parallel writes.
         """
-        values_list = mapping.to_int_sequence(tensor)
+        values_list = mapping.to_logic_sequence(tensor)
         addr_list = addr_mapping.get_addr_list()
         self.backdoor_write(addr_list, values_list)
 
     def init_from_tensor(self, tensor: torch.Tensor, mapping: TileMapping, addr_mapping: AddressMapping) -> None:
         """Alias for backdoor_load_tensor() for backward compatibility."""
+        import warnings
+        warnings.warn(
+            "init_from_tensor() is deprecated, use backdoor_load_tensor() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
         return self.backdoor_load_tensor(tensor, mapping, addr_mapping)
 
     def backdoor_dump_tensor(self, mapping: TileMapping, addr_mapping: AddressMapping) -> torch.Tensor:
@@ -278,6 +296,12 @@ class Buffer:
 
     def dump_to_tensor(self, mapping: TileMapping, addr_mapping: AddressMapping) -> torch.Tensor:
         """Alias for backdoor_dump_tensor() for backward compatibility."""
+        import warnings
+        warnings.warn(
+            "dump_to_tensor() is deprecated, use backdoor_dump_tensor() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
         return self.backdoor_dump_tensor(mapping, addr_mapping)
 
 

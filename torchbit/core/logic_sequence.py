@@ -39,4 +39,13 @@ class LogicSequence(list):
 
 
 # Backward compatibility alias
-IntSequence = LogicSequence
+class IntSequence(LogicSequence):
+    """Deprecated alias for LogicSequence."""
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "IntSequence is deprecated, use LogicSequence instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

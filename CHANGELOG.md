@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-02-11
+
+### Added
+- **UVM:** Added `torchbit.uvm` package with pyuvm integration layer (#8, #9):
+  - `TorchbitBFM`: Bridge between pyuvm components and cocotb DUT signals via InputPort/OutputPort.
+  - `VectorItem` / `LogicSequenceItem`: Sequence item wrappers for torchbit data types.
+  - `TorchbitDriver` / `TorchbitMonitor` / `TorchbitAgent`: Lightweight wrappers (work without pyuvm).
+  - `create_uvm_driver()` / `create_uvm_monitor()` / `create_uvm_agent()`: Factory functions that lazily import pyuvm and return UVM-compatible subclasses.
+- **Tools:** Added `ComponentDB` class for UVM-style hierarchical signal path registry (#6):
+  - `set()` / `get()`: Register and retrieve signal mappings by dot-separated paths.
+  - `find_by_tag()` / `find_by_path()`: Lookup components by tag or glob pattern.
+  - `register_component()`: Register components for tag-based discovery.
+- **Tools:** Added `from_path()` classmethod to `FIFODriver` and `FIFOReceiver` for ComponentDB-based signal resolution.
+- **Tools:** Added `tag` attribute to `FIFODriver` and `FIFOReceiver` for component identification.
+- **Package:** Added `uvm` optional dependency group: `pip install torchbit[uvm]` for pyuvm>=4.0.0.
+- **Tests:** Added `test_component_db.py` with tests for ComponentDB path registry and component lookup.
+- **Tests:** Added `test_uvm.py` with tests for BFM, sequence items, driver/monitor/agent (no pyuvm needed).
+
+### Changed
+- **Deprecation:** Added `DeprecationWarning` to all legacy aliases (#3), scheduled for removal in v3.0.0:
+  - `Vector`: `from_cocotb()`, `from_tensor()`, `to_cocotb()`, `to_int()`, `to_tensor()`
+  - `VectorSequence`: `from_tensor()`, `to_tensor()`, `from_int_sequence()`, `to_int_sequence()`
+  - `Matrix` class (use `VectorSequence`)
+  - `IntSequence` class (use `LogicSequence`)
+  - `TileMapping.to_int_sequence()` (use `to_logic_sequence()`)
+  - `tensor_to_cocotb()` / `cocotb_to_tensor()` (use `array_to_logic()` / `logic_to_array()`)
+  - `tensor_to_cocotb_seq()` / `cocotb_seq_to_tensor()` (use `array_to_logic_seq()` / `logic_seq_to_array()`)
+  - `Buffer`: `init_from_matrix()`, `dump_to_matrix()`, `init_from_tensor()`, `dump_to_tensor()`
+
+### Fixed
+- **Examples:** Fixed invalid `BitStruct` constructor calls in `03_bit_struct` example (#2).
+
 ## [2.5.0] - 2026-02-11
 
 ### Added

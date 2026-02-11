@@ -336,7 +336,13 @@ class VectorSequence:
         return LogicSequence(Vector.from_array(row).to_logic() for row in self.tensor)
 
     def to_int_sequence(self):
-        """Alias for to_logic_sequence()."""
+        """Deprecated alias for to_logic_sequence()."""
+        import warnings
+        warnings.warn(
+            "VectorSequence.to_int_sequence() is deprecated, use VectorSequence.to_logic_sequence() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
         return self.to_logic_sequence()
 
     @staticmethod
@@ -355,8 +361,16 @@ class VectorSequence:
         rows = [Vector.from_logic(v, num, dtype).to_array() for v in logic_seq]
         return VectorSequence(torch.stack(rows))
 
-    # Alias
-    from_int_sequence = from_logic_sequence
+    @staticmethod
+    def from_int_sequence(logic_seq, num: int, dtype: torch.dtype) -> "VectorSequence":
+        """Deprecated alias for from_logic_sequence()."""
+        import warnings
+        warnings.warn(
+            "VectorSequence.from_int_sequence() is deprecated, use VectorSequence.from_logic_sequence() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        return VectorSequence.from_logic_sequence(logic_seq, num, dtype)
 
     def to_matrix(self) -> torch.Tensor:
         """Get the underlying PyTorch tensor (matrix).
@@ -371,12 +385,14 @@ class VectorSequence:
         return self.tensor
 
     def to_tensor(self) -> torch.Tensor:
-        """Alias for to_matrix(). Get the underlying PyTorch tensor.
-
-        Returns:
-            The 2D PyTorch tensor stored in this VectorSequence.
-        """
-        return self.tensor
+        """Deprecated alias for to_matrix()."""
+        import warnings
+        warnings.warn(
+            "VectorSequence.to_tensor() is deprecated, use VectorSequence.to_matrix() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        return self.to_matrix()
 
     @staticmethod
     def from_matrix(tensor: torch.Tensor) -> "VectorSequence":
@@ -397,9 +413,35 @@ class VectorSequence:
         """
         return VectorSequence(tensor)
 
-    # Alias
-    from_tensor = from_matrix
+    @staticmethod
+    def from_tensor(tensor: torch.Tensor) -> "VectorSequence":
+        """Deprecated alias for from_matrix()."""
+        import warnings
+        warnings.warn(
+            "VectorSequence.from_tensor() is deprecated, use VectorSequence.from_matrix() instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        return VectorSequence.from_matrix(tensor)
 
 
 # Backward compatibility alias
-Matrix = VectorSequence
+class Matrix(VectorSequence):
+    """Deprecated alias for VectorSequence."""
+    def __init_subclass__(cls, **kwargs):
+        import warnings
+        warnings.warn(
+            "Matrix is deprecated, use VectorSequence instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        super().__init_subclass__(**kwargs)
+
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            "Matrix is deprecated, use VectorSequence instead. "
+            "Will be removed in v3.0.0.",
+            DeprecationWarning, stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

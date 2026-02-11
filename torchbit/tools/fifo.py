@@ -49,6 +49,37 @@ class FIFODriver:
         self.debug = debug
         self.queue: LogicSequence = LogicSequence()
         self.timestamps: List[tuple] = []
+        self.tag = None
+
+    @classmethod
+    def from_path(cls, path: str, dut, clk, strategy=None, debug=False,
+                  active_high=True):
+        """Create a FIFODriver by resolving signals from ComponentDB.
+
+        Args:
+            path: ComponentDB path (e.g., ``"top.encoder.input"``).
+            dut: DUT object.
+            clk: Clock signal.
+            strategy: TransferStrategy (defaults to GreedyStrategy).
+            debug: Enable debug logging.
+            active_high: Signal polarity for ready.
+
+        Returns:
+            A connected FIFODriver instance.
+        """
+        from .component_db import ComponentDB
+        signals = ComponentDB.get(path)
+        driver = cls(strategy=strategy, debug=debug)
+        driver.tag = path.split(".")[-1]
+        driver.connect(
+            dut=dut, clk=clk,
+            data=signals["data"],
+            valid=signals["valid"],
+            ready=signals.get("ready"),
+            active_high=active_high,
+        )
+        ComponentDB.register_component(driver)
+        return driver
 
     def connect(self, dut, clk, data, valid, ready=None, active_high: bool = True) -> None:
         """Connect the FIFODriver to HDL signals.
@@ -169,6 +200,34 @@ class FIFOReceiver:
         self.debug = debug
         self.data: LogicSequence = LogicSequence()
         self.timestamps: List[tuple] = []
+        self.tag = None
+
+    @classmethod
+    def from_path(cls, path: str, dut, clk, strategy=None, debug=False):
+        """Create a FIFOReceiver by resolving signals from ComponentDB.
+
+        Args:
+            path: ComponentDB path (e.g., ``"top.decoder.output"``).
+            dut: DUT object.
+            clk: Clock signal.
+            strategy: TransferStrategy (defaults to GreedyStrategy).
+            debug: Enable debug logging.
+
+        Returns:
+            A connected FIFOReceiver instance.
+        """
+        from .component_db import ComponentDB
+        signals = ComponentDB.get(path)
+        receiver = cls(strategy=strategy, debug=debug)
+        receiver.tag = path.split(".")[-1]
+        receiver.connect(
+            dut=dut, clk=clk,
+            data=signals["data"],
+            valid=signals["valid"],
+            ready=signals["ready"],
+        )
+        ComponentDB.register_component(receiver)
+        return receiver
 
     def connect(self, dut, clk, data, valid, ready) -> None:
         """Connect the FIFOReceiver to HDL signals.
