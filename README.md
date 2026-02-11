@@ -1,8 +1,8 @@
 <h1 align="center">Torchbit</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.4.2-blue" alt="version">
-  <img src="https://img.shields.io/badge/Python-3838_lines-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/version-2.5.0-blue" alt="version">
+  <img src="https://img.shields.io/badge/Python-4109_lines-3776AB?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Markdown-214_lines-083fa1" alt="Markdown">
   <img src="https://img.shields.io/badge/SystemVerilog-18_lines-dc382c" alt="SystemVerilog">
 </p>

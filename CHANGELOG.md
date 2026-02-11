@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-02-11
+
+### Added
+- **Tools:** Added `TransferStrategy` abstract base class and four concrete strategies for pluggable transfer timing control:
+  - `GreedyStrategy`: Transfer whenever channel is ready (default).
+  - `RandomBackpressure`: Randomly stall with configurable probability and optional seed for reproducibility.
+  - `BurstStrategy`: Send N items, pause M cycles, repeat.
+  - `ThrottledStrategy`: Transfer at most once every N cycles.
+- **Tools:** Added `FIFODriver` class for pushing data into DUT input FIFOs (TB → DUT) with explicit `active_high` polarity parameter and pluggable `TransferStrategy`.
+- **Tools:** Added `FIFOReceiver` class for capturing data from DUT output FIFOs (DUT → TB) with strategy-controlled ready assertion.
+- **Tests:** Added `test_strategy.py` with comprehensive tests for all four transfer strategies (pure Python, no cocotb).
+- **Tests:** Added `test_fifo.py` with construction and import tests for FIFODriver/FIFOReceiver.
+- **Tests:** Added `test_no_cocotb.py` with 11 subprocess-based tests verifying all core imports and operations work without cocotb.
+
+### Changed
+- **Package:** Made cocotb an optional dependency (#13). Pure-Python features (Vector, TileMapping, BitStruct, Buffer, LogicSequence) now work without cocotb installed.
+- **Package:** Moved `cocotb>=2.0.0` from required `dependencies` to `[project.optional-dependencies]` in `pyproject.toml`. Added `packaging` to core dependencies.
+- **Core:** Replaced top-level `import cocotb` with lazy imports in `vector.py`, `vector_sequence.py`.
+- **Tools:** Replaced top-level cocotb imports with lazy imports in `buffer.py`, `driver.py`, `monitor.py`.
+- **Runner:** Replaced top-level `cocotb_tools` import with lazy import in `runner.py`.
+- **Core:** Updated Vector class docstring to use canonical method names (from_array/to_logic).
+- **Core:** Improved `LogicSequence` class docstring with usage patterns and examples.
+- **Tiling:** Fixed TileMapping docstring: `IntSequence` → `LogicSequence`.
+- **Core:** Replaced bare `print()` with `logging.getLogger(__name__)` in `vector.py` (#5).
+- **Debug:** Replaced bare `print()` with `logging.getLogger(__name__)` in `temporal_event.py` (#5).
+- **Tools:** Replaced bare `print()` with `logging.getLogger(__name__)` in `monitor.py`.
+
 ## [2.4.2] - 2026-02-10
 
 ### Added
