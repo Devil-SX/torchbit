@@ -22,8 +22,8 @@ dependencies = [
   "torch",
   "numpy",
   "matplotlib",
-  "cocotb>=2.0.0", # cocotb 2.0.0 update cocotb.runner api--
-  "einops"
+  "einops",
+  "packaging",
 ]
 
 [tool.setuptools.packages.find]
@@ -33,6 +33,7 @@ where = ["."]
 include-package-data = true
 
 [project.optional-dependencies]
+cocotb = ["cocotb>=2.0.0"]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",

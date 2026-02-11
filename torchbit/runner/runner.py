@@ -6,7 +6,6 @@ with waveform dumping support.
 """
 from .config import *
 from pathlib import Path
-from cocotb_tools.runner import get_runner
 
 
 def generate_vcs_dump_wave(path: Path, top_module: str) -> None:
@@ -112,6 +111,7 @@ class Runner:
             # self.top_design = "dump_fsdb"
             self.build_args += ["-top", "dump_fsdb"]  # set multi-top modules
 
+        from cocotb_tools.runner import get_runner
         runner = get_runner(self.backend)
         runner.build(
             verilog_sources=self.sources,

@@ -2,10 +2,19 @@ from importlib.metadata import version as _version
 
 __version__ = _version("torchbit")
 
-import cocotb
-from packaging import version
-
-assert version.parse(cocotb.__version__) >= version.parse("2.0.0"), "Cocotb version must be == 2.x for torchbit >= 2.x, please upgrade cocotb."
+try:
+    import cocotb as _cocotb
+    from packaging import version as _version_pkg
+    if _version_pkg.parse(_cocotb.__version__) < _version_pkg.parse("2.0.0"):
+        import warnings
+        warnings.warn(
+            "torchbit verification tools require cocotb >= 2.0.0, "
+            f"found {_cocotb.__version__}. Driver/Monitor/Buffer may not work.",
+            UserWarning,
+            stacklevel=2,
+        )
+except ImportError:
+    pass
 
 from . import core
 from . import debug

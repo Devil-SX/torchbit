@@ -4,10 +4,6 @@ Data monitor utilities for Cocotb testbenches.
 Provides PoolMonitor and FIFOMonitor classes for collecting
 responses from HDL interfaces.
 """
-import cocotb
-from cocotb.triggers import RisingEdge, Event
-from cocotb.utils import get_sim_time
-from cocotb.handle import Immediate
 from .port import InputPort, OutputPort
 from ..core.logic_sequence import LogicSequence
 from typing import List
@@ -69,15 +65,17 @@ class PoolMonitor:
         self.data_port = InputPort(data)
         self.valid_port = InputPort(valid)
 
-    async def run(self, stop_event: Event) -> None:
+    async def run(self, stop_event) -> None:
         """Start collecting data.
 
         Runs as a coroutine, capturing data on each valid cycle
         until stop_event is set.
 
         Args:
-            stop_event: Event that signals when to stop collection.
+            stop_event: cocotb Event that signals when to stop collection.
         """
+        from cocotb.triggers import RisingEdge
+        from cocotb.utils import get_sim_time
         # Monitor now implicitly assumes it's always ready to receive,
         # as 'ready' output was removed.
 
@@ -172,15 +170,18 @@ class FIFOMonitor:
         self.ready_port = OutputPort(ready)
         self.valid_port = InputPort(valid) if valid is not None else None
 
-    async def run(self, stop_event: Event) -> None:
+    async def run(self, stop_event) -> None:
         """Start collecting data.
 
         Runs as a coroutine, managing ready/deassertion and capturing
         data on valid/ready handshake until stop_event is set.
 
         Args:
-            stop_event: Event that signals when to stop collection.
+            stop_event: cocotb Event that signals when to stop collection.
         """
+        from cocotb.triggers import RisingEdge
+        from cocotb.utils import get_sim_time
+        from cocotb.handle import Immediate
         # Monitor now implicitly assumes it's always ready to receive,
         # as 'ready' output was removed.
         self.ready_port.set(Immediate(0))

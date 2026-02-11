@@ -6,10 +6,8 @@ memory files (hex/bin) used with Verilog $readmemh/$writememh and similar
 system tasks. Essential for verifying memory-mapped IP blocks and loading
 initial memory contents.
 """
-import cocotb.types
 import torch
 import numpy as np
-import cocotb
 from pathlib import Path
 from .dtype import *
 from ..utils.bit_ops import *

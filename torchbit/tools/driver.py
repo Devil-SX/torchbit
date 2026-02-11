@@ -3,9 +3,6 @@ Data driver utility for Cocotb testbenches.
 
 Provides the Driver class for driving stimulus into HDL interfaces.
 """
-import cocotb
-from cocotb.triggers import RisingEdge, Event
-from cocotb.utils import get_sim_time
 from .port import InputPort, OutputPort
 from ..core.logic_sequence import LogicSequence
 from typing import List
@@ -94,15 +91,17 @@ class Driver:
         """
         return self.timestamps
 
-    async def run(self, stop_event: Event = None) -> None:
+    async def run(self, stop_event=None) -> None:
         """Start sending data.
 
         Runs as a coroutine, sending values from the queue on each
         clock cycle until all values are sent or stop_event is set.
 
         Args:
-            stop_event: Optional Event to signal early termination.
+            stop_event: Optional cocotb Event to signal early termination.
         """
+        from cocotb.triggers import RisingEdge, Event
+        from cocotb.utils import get_sim_time
         idx = 0
         while idx < len(self.queue):
             if stop_event is not None and isinstance(stop_event, Event):

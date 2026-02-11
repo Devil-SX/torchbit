@@ -5,10 +5,8 @@ Provides the Vector class for converting between PyTorch 1D tensors and
 HDL-compatible integer representations. Essential for driving and capturing
 scalar and array signals in Cocotb testbenches.
 """
-import cocotb.types
 import torch
 import numpy as np
-import cocotb
 from pathlib import Path
 from .dtype import *
 from ..utils.bit_ops import *
@@ -117,7 +115,7 @@ class Vector:
             return Vector(torch.from_numpy(vec).view(dtype))
 
     @staticmethod
-    def from_logic(value: cocotb.types.LogicArray | int, num: int, dtype: torch.dtype) -> "Vector":
+    def from_logic(value, num: int, dtype: torch.dtype) -> "Vector":
         """Create a Vector from a logic value (LogicArray or int).
 
         Converts HDL signal values (LogicArray or integer) back into a Vector
@@ -133,6 +131,7 @@ class Vector:
             A new Vector instance with the converted tensor.
 
         Raises:
+            ImportError: If cocotb is not installed and value is not an int.
             AssertionError: If value type is unsupported.
 
         Note:
@@ -143,6 +142,16 @@ class Vector:
             >>> vec = Vector.from_logic(dut.data_out.value, 8, torch.float32)
             >>> tensor = vec.to_array()
         """
+        try:
+            import cocotb.types
+        except ImportError:
+            if isinstance(value, int):
+                return Vector.from_int(value, num, dtype)
+            raise ImportError(
+                "Vector.from_logic() requires cocotb for non-int values. "
+                "Install with: pip install cocotb>=2.0.0"
+            )
+
         assert isinstance(
             value, cocotb.types.LogicArray
         ) or isinstance(value, int), "value must be a cocotb logicarray value or int value, use Vector.from_logic(dut.io_xxx.value)"
@@ -262,7 +271,7 @@ def array_to_logic(tensor: torch.Tensor) -> int:
     return Vector.from_array(tensor).to_logic()
 
 
-def logic_to_array(value: cocotb.types.LogicArray | int, num: int, dtype: torch.dtype) -> torch.Tensor:
+def logic_to_array(value, num: int, dtype: torch.dtype) -> torch.Tensor:
     """Convert a logic value (LogicArray or int) directly to a 1D tensor (array).
 
     This is a convenience wrapper combining Vector.from_logic() and to_array().

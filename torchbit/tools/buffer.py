@@ -5,8 +5,6 @@ Provides Buffer and TwoPortBuffer classes for simulating memory arrays
 with HDL interface connectivity. Essential for modeling SRAM, register
 files, and other memory-mapped storage during verification.
 """
-import cocotb
-from cocotb.triggers import RisingEdge, Timer
 import numpy as np
 from ..core.vector import Vector
 from ..core.logic_sequence import LogicSequence
@@ -444,6 +442,7 @@ class TwoPortBuffer(Buffer):
         Continuously monitors read chip select and outputs data when
         the read is active. Runs until the simulation ends.
         """
+        from cocotb.triggers import RisingEdge
         while True:
             await RisingEdge(self.clk)
             read_trig = is_trig(self.rd_csb.get(), self.is_pos_trig)
@@ -467,6 +466,7 @@ class TwoPortBuffer(Buffer):
         the write is active. Supports optional write masking.
         Runs until the simulation ends.
         """
+        from cocotb.triggers import RisingEdge, Timer
         while True:
             await RisingEdge(self.clk)
             write_trig = is_trig(self.wr_csb.get(), self.is_pos_trig)
@@ -500,5 +500,6 @@ class TwoPortBuffer(Buffer):
             >>> await buf.init()
             >>> cocotb.start_soon(buf.run())
         """
+        import cocotb
         cocotb.start_soon(self._run_read())
         cocotb.start_soon(self._run_write())
