@@ -4,9 +4,12 @@ Data monitor utilities for Cocotb testbenches.
 Provides PoolMonitor and FIFOMonitor classes for collecting
 responses from HDL interfaces.
 """
+import logging
 from .port import InputPort, OutputPort
 from ..core.logic_sequence import LogicSequence
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 class PoolMonitor:
@@ -146,7 +149,7 @@ class FIFOMonitor:
             debug: If True, enable debug logging.
         """
         self.debug = debug
-        print(f"[FIFOMonitor] Initialized {debug=}")
+        logger.debug("FIFOMonitor initialized (debug=%s)", debug)
         self.data: LogicSequence = LogicSequence()
         self.timestamps: List[tuple] = []
 

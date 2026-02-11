@@ -18,16 +18,26 @@ Core Concepts:
    - AddressMapping: Maps multi-dimensional indices to flat memory addresses
    - ContiguousAddressMapping: Row-major contiguous address mapping (strides auto-computed)
 
-4. Driver/PoolMonitor/FIFOMonitor: Data drivers and monitors for testbench
+4. Driver/PoolMonitor/FIFOMonitor: Legacy data drivers and monitors for testbench
    - Driver: Drives data onto HDL signals with optional backpressure
    - PoolMonitor: Collects data with valid signaling (no flow control)
    - FIFOMonitor: Collects data with FIFO-style ready/empty flow control
 
-5. InputPort/OutputPort: Signal wrapper abstractions for Cocotb
+5. FIFODriver/FIFOReceiver: Rich FIFO interface components with strategies
+   - FIFODriver: Push data into DUT input FIFO (TB → DUT) with explicit polarity
+   - FIFOReceiver: Capture data from DUT output FIFO (DUT → TB) with strategy
+
+6. TransferStrategy: Pluggable transfer timing strategies
+   - GreedyStrategy: Transfer whenever channel is ready (default)
+   - RandomBackpressure: Randomly stall with configurable probability
+   - BurstStrategy: Send N items, pause M cycles, repeat
+   - ThrottledStrategy: Transfer at most once every N cycles
+
+7. InputPort/OutputPort: Signal wrapper abstractions for Cocotb
    - InputPort: Read wrapper handling None signals gracefully
    - OutputPort: Write wrapper with immediate value option
 
-6. pad/depad: Tensor padding utilities for memory alignment
+8. pad/depad: Tensor padding utilities for memory alignment
    NOTE: These have moved to torchbit.tiling module
 
 Example:
@@ -72,6 +82,8 @@ from .port import *
 from ..core.bit_struct import *
 from .driver import *
 from .monitor import *
+from .strategy import *
+from .fifo import *
 
 # Re-export tiling module for backward compatibility
 from ..tiling import *
