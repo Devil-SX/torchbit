@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-02-11
+
+### Added
+- **UVM:** Added `ComponentRegistry` for factory-style component type overrides (#11).
+- **UVM:** Added `CoveragePoint` and `CoverageGroup` for functional coverage tracking with bin-based sampling and reporting (#11).
+- **UVM:** Added `RegisterModel` and `RegisterBlock` for Register Abstraction Layer (RAL) integration with BitStruct (#11).
+  - Field-level read/write, packed value roundtrip, and Buffer backdoor access.
+- **Tests:** Added `test_uvm_advanced.py` with 16 tests for factory, coverage, and RAL components.
+
 ## [3.0.0] - 2026-02-11
 
 ### Added

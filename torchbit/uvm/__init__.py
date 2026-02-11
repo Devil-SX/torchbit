@@ -15,3 +15,6 @@ from .agent import TorchbitAgent
 from .scoreboard import TorchbitScoreboard
 from .env import TorchbitEnv
 from .test import TorchbitTest
+from .factory import ComponentRegistry
+from .coverage import CoverageGroup, CoveragePoint
+from .ral import RegisterModel, RegisterBlock
