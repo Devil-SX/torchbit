@@ -89,7 +89,7 @@ class TileMapping:
       time step (index 0 is the first time step, index 1 is the second, etc.)
     - Second dimension (spatial): the hardware vector, reflecting parallelism
 
-    TileMapping handles only value conversion (tensor <-> IntSequence).
+    TileMapping handles only value conversion (tensor <-> LogicSequence).
     Address generation is handled separately by AddressMapping.
 
     Key concepts:

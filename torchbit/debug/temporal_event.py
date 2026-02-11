@@ -5,11 +5,14 @@ Provides functions for drawing and analyzing temporal event sequences,
 useful for visualizing the timing relationship between driver/monitor
 events in verification tests.
 """
+import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import json
 from pathlib import Path
 from typing import List, Dict, Any
+
+logger = logging.getLogger(__name__)
 
 
 def load_from_json(json_path: str | Path) -> Dict[str, Any]:
@@ -61,7 +64,7 @@ def load_from_json(json_path: str | Path) -> Dict[str, Any]:
 
     events = data.get("events", [])
     if not events:
-        print(f"Warning: No 'events' list found in {json_path}")
+        logger.warning("No 'events' list found in %s", json_path)
 
     for event in events:
         names.append(event.get("name", "Unnamed"))
@@ -130,7 +133,7 @@ def draw_temporal_event_seqs(path: str, names: List[str], seqs: List[List[float 
         raise ValueError(f"Length mismatch: names({len(names)}) vs seqs({len(seqs)})")
 
     if not names:
-        print("Warning: No data to plot.")
+        logger.warning("No data to plot.")
         return
 
     # Determine figure height based on number of sequences

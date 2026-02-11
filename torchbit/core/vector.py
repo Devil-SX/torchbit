@@ -5,25 +5,34 @@ Provides the Vector class for converting between PyTorch 1D tensors and
 HDL-compatible integer representations. Essential for driving and capturing
 scalar and array signals in Cocotb testbenches.
 """
+import logging
 import torch
 import numpy as np
 from pathlib import Path
 from .dtype import *
 from ..utils.bit_ops import *
 
+logger = logging.getLogger(__name__)
+
 
 class Vector:
     """A 1D tensor wrapper for hardware verification.
 
     Vector is the fundamental data type for converting between PyTorch tensors
-    and Cocotb-compatible formats. It handles 1D tensors and converts them
-    to/from integer values suitable for driving HDL interfaces.
+    and HDL-compatible integer representations. It handles 1D tensors and
+    converts them to/from packed integer values suitable for driving HDL
+    interfaces.
 
-    The Vector class acts as the interface between PyTorch tensors and Cocotb
-    LogicArrays or Verilog multi-bit interfaces. It supports:
+    The Vector class acts as the interface between PyTorch tensors and
+    HDL multi-bit interfaces. It supports:
     - Converting tensors to packed integers for driving HDL signals
     - Unpacking integers from HDL signals back to tensors
-    - Direct conversion to/from Cocotb signal values
+    - Direct conversion to/from Cocotb LogicArray values (requires cocotb)
+
+    Canonical method names (v2.4.0+):
+    - from_array / to_array: tensor conversion
+    - from_logic / to_logic: packed integer / LogicArray conversion
+    - Aliases: from_tensor, to_tensor, from_cocotb, to_cocotb, from_int, to_int
 
     Attributes:
         tensor (torch.Tensor): The underlying 1D PyTorch tensor.
@@ -35,27 +44,27 @@ class Vector:
         >>> import torch
         >>> from torchbit.core import Vector
         >>>
-        >>> # Convert tensor to cocotb value
+        >>> # Convert tensor to packed integer (logic value)
         >>> tensor = torch.tensor([1.5, 2.5, 3.5], dtype=torch.float32)
-        >>> vec = Vector.from_tensor(tensor)
-        >>> cocotb_value = vec.to_cocotb()
+        >>> vec = Vector.from_array(tensor)
+        >>> logic_value = vec.to_logic()
         >>>
-        >>> # Convert cocotb value back to tensor
-        >>> vec = Vector.from_cocotb(cocotb_value, 3, torch.float32)
-        >>> tensor = vec.to_tensor()
+        >>> # Convert packed integer back to tensor
+        >>> vec = Vector.from_logic(logic_value, 3, torch.float32)
+        >>> tensor = vec.to_array()
 
     Typical usage in Cocotb tests:
         >>> @cocotb.test
         >>> async def test_example(dut):
         >>>     # Drive inputs
         >>>     input_tensor = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
-        >>>     dut.data_in.value = Vector.from_tensor(input_tensor).to_cocotb()
+        >>>     dut.data_in.value = Vector.from_array(input_tensor).to_logic()
         >>>
         >>>     await RisingEdge(dut.clk)
         >>>
         >>>     # Capture outputs
-        >>>     output_vec = Vector.from_cocotb(dut.data_out.value, 4, torch.float32)
-        >>>     output_tensor = output_vec.to_tensor()
+        >>>     output_vec = Vector.from_logic(dut.data_out.value, 4, torch.float32)
+        >>>     output_tensor = output_vec.to_array()
     """
 
     def __init__(self, tensor: torch.Tensor = None):
@@ -157,7 +166,7 @@ class Vector:
         ) or isinstance(value, int), "value must be a cocotb logicarray value or int value, use Vector.from_logic(dut.io_xxx.value)"
 
         if isinstance(value, cocotb.types.LogicArray) and (("x" in value.binstr) or ("z" in value.binstr)):
-            print("Warning: value is a X/Z value, use the zero result")
+            logger.warning("X/Z states detected in LogicArray value, returning zeros")
             return Vector(torch.zeros(num, dtype=dtype))
 
         value_int = int(value) if (isinstance(value, cocotb.types.LogicArray) or isinstance(value, cocotb.types.Logic)) else value
