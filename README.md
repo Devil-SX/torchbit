@@ -20,6 +20,21 @@ Torchbit provides utilities for deep learning accelerator verification, facilita
 
 ![logo](logo.jpg)
 
+## Table of Contents
+
+- [Features](#features)
+- [Get Started](#get-started)
+- [Philosophy](#philosophy)
+- [Basic Datatypes](#basic-datatypes)
+  - [Terminology](#terminology)
+  - [Transaction: Single Value Conversion](#transaction-single-value-conversion)
+  - [Sequence: Batch Value Conversion](#sequence-batch-value-conversion)
+  - [Tensor ↔ LogicSequence via TileMapping](#tensor--logicsequence-via-tilemapping)
+- [Tools Overview](#tools-overview)
+- [Verification API](#verification-api)
+- [Running with Verilator/VCS Using Built-in Runner](#running-with-verilatorvcs-using-built-in-runner)
+- [Documentation](#documentation)
+
 # Features
 
 - **Rapidly build torch-native test frameworks:**
@@ -180,6 +195,22 @@ restored = logic_seq_to_matrix(seq, 4, torch.float32)        # LogicSequence →
 - **TileMapping**: Rearranges a Tensor into a Matrix, then packs into a `LogicSequence`.
 - **AddressMapping**: Generates address sequences for back-door memory access.
 
+## Verification API
+
+Torchbit provides two API modes for building testbenches:
+
+| | Native torchbit (`torchbit.tools`) | PyUVM-compatible (`torchbit.uvm`) |
+|---|---|---|
+| **Drive stimulus** | `Driver` / `FIFODriver` | `TorchbitBFM` + `create_uvm_driver()` |
+| **Capture response** | `PoolMonitor` / `FIFOReceiver` | `TorchbitBFM` + `create_uvm_monitor()` |
+| **Result comparison** | manual `torch.equal()` | `TorchbitScoreboard` |
+| **Transfer timing** | `TransferStrategy` | same |
+| **Dependencies** | cocotb only | cocotb (+ pyuvm for factory functions) |
+
+The native API is lightweight and direct — connect signals, load data, run. The PyUVM API adds BFM signal abstraction, a Scoreboard, functional coverage, and register modeling. Both can be mixed freely.
+
+For the full comparison with code examples, see [Verification API Reference](./doc/en/verification_api.md).
+
 # Running with Verilator/VCS Using Built-in Runner
 
 `torchbit.runner` includes pre-built Cocotb launch wrappers that configure common simulator parameters. You can either write your testbench using standard Cocotb interfaces or leverage Torchbit's helper functions.
@@ -233,5 +264,11 @@ Then, simply run `python top_test.py`. After execution, a `sim_xx` folder will b
 
 The `.fsdb` file stores the runtime database. You can view the corresponding source code directly by running `verdi -ssf dump.fsdb`.
 
+# Documentation
 
-
+| Document | Description |
+|----------|-------------|
+| [Verification API Reference](./doc/en/verification_api.md) | Native vs PyUVM API comparison, usage patterns, and examples |
+| [Value Conversion](./doc/en/value.md) | Endianness and value transformation principles |
+| [Tiling Schedule](./doc/en/tilling_schedule.md) | TileMapping design principles and einops-based scheduling |
+| [Golden Model Recommendations](./doc/en/golden_model_recommend.md) | Guidelines for building reference models |

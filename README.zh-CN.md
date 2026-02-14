@@ -20,6 +20,21 @@ Torchbit 为深度学习加速器验证提供实用工具，便于将 PyTorch �
 
 ![logo](logo.jpg)
 
+## 目录
+
+- [功能特性](#功能特性)
+- [快速开始](#快速开始)
+- [设计哲学](#设计哲学)
+- [基本数据类型](#基本数据类型)
+  - [术语](#术语)
+  - [Transaction：单值转换](#transaction单值转换)
+  - [Sequence：批量值转换](#sequence批量值转换)
+  - [Tensor ↔ LogicSequence：通过 TileMapping 转换](#tensor--logicsequence通过-tilemapping-转换)
+- [工具概览](#工具概览)
+- [验证 API](#验证-api)
+- [使用内置运行器在 Verilator/VCS 上运行](#使用内置运行器在-verilatorvcs-上运行)
+- [文档](#文档)
+
 # 功能特性
 
 - **快速构建 torch 原生测试框架：**
@@ -180,6 +195,22 @@ restored = logic_seq_to_matrix(seq, 4, torch.float32)        # LogicSequence →
 - **TileMapping**：将 Tensor 重排为 Matrix，再打包为 `LogicSequence`。
 - **AddressMapping**：为后门存储访问生成地址序列。
 
+## 验证 API
+
+Torchbit 提供两种 API 模式来构建测试平台：
+
+| | 原生 torchbit (`torchbit.tools`) | PyUVM 兼容 (`torchbit.uvm`) |
+|---|---|---|
+| **驱动激励** | `Driver` / `FIFODriver` | `TorchbitBFM` + `create_uvm_driver()` |
+| **采集响应** | `PoolMonitor` / `FIFOReceiver` | `TorchbitBFM` + `create_uvm_monitor()` |
+| **结果比对** | 手动 `torch.equal()` | `TorchbitScoreboard` |
+| **传输时序** | `TransferStrategy` | 同 |
+| **依赖** | 仅 cocotb | cocotb（+ pyuvm 用于工厂函数） |
+
+原生 API 轻量直接——连接信号、加载数据、运行。PyUVM API 增加了 BFM 信号抽象、Scoreboard、功能覆盖率和寄存器建模。两者可自由混合使用。
+
+完整对照及代码示例参见[验证 API 参考](./doc/zh-CN/verification_api.md)。
+
 # 使用内置运行器在 Verilator/VCS 上运行
 
 `torchbit.runner` 包括预构建的 Cocotb 启动封装，可配置常见模拟器参数。您可以使用标准 Cocotb 接口编写测试平台，也可以利用 Torchbit 的辅助函数。
@@ -233,5 +264,12 @@ if __name__ == "__main__":
 
 `.fsdb` 文件存储运行时数据库。您可以通过运行 `verdi -ssf dump.fsdb` 直接查看相应的源代码。
 
+# 文档
 
+| 文档 | 说明 |
+|------|------|
+| [验证 API 参考](./doc/zh-CN/verification_api.md) | 原生 vs PyUVM API 对照、使用模式与示例 |
+| [值转换](./doc/zh-CN/value.md) | 字节序与值变换原理 |
+| [Tiling 调度](./doc/zh-CN/tilling_schedule.md) | TileMapping 设计原理与基于 einops 的调度 |
+| [Golden Model 建议](./doc/zh-CN/golden_model_recomd.md) | 构建参考模型的指南 |
 

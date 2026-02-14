@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Docs:** Added `doc/en/verification_api.md` — full API comparison document covering Native torchbit vs PyUVM-compatible verification APIs with comparison table, component reference, and workflow examples.
+- **Docs:** Added `doc/zh-CN/verification_api.md` — Chinese translation of the verification API reference.
+- **Docs:** Added Table of Contents, Verification API section, and Documentation section to both `README.md` and `README.zh-CN.md`.
+- **Examples:** Added `09_uvm_pipeline` example demonstrating UVM-style verification with real RTL simulation using TorchbitBFM, TorchbitScoreboard, VectorItem, and TransferStrategy against a parameterized pipeline DUT.
+- **Skills:** Enhanced `report_testbench` skill with report skeleton template, testbench topology diagram requirement, and conditional TileMapping/AddressMapping reporting.
+
 ## [3.2.0] - 2026-02-11
 
 ### Added
